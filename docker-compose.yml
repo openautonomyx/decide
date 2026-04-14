@@ -3,6 +3,13 @@ services:
     build: ./services/claude-coder
     env_file:
       - .env
+    environment:
+      CODING_SPECIALIST_MODEL: ${CODING_SPECIALIST_MODEL}
+      WORKSPACE_ROOT: ${WORKSPACE_ROOT}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
     volumes:
       - ./:/workspace
     ports:
@@ -12,5 +19,9 @@ services:
     build: ./services/memory-service
     env_file:
       - .env
+    environment:
+      WORKSPACE_ROOT: ${WORKSPACE_ROOT}
+    volumes:
+      - ./:/workspace
     ports:
       - "18090:8090"
