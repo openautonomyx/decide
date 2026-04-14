@@ -1,0 +1,41 @@
+backends:
+  claude_premium:
+    capability: coding
+    env_prefix: CLAUDE_PREMIUM
+    supports:
+      - coding
+      - repo_analysis
+      - test_generation
+      - refactor
+
+  devstral_local:
+    capability: coding
+    env_prefix: DEVSTRAL_LOCAL
+    supports:
+      - coding
+      - repo_analysis
+      - test_generation
+      - refactor
+
+  openai_coding:
+    capability: coding
+    env_prefix: OPENAI_CODING
+    supports:
+      - coding
+      - repo_analysis
+      - test_generation
+      - refactor
+
+  gpt_image:
+    capability: image_editing
+    env_prefix: GPT_IMAGE
+    supports:
+      - image_editing
+      - image_generation
+
+  local_image_backend:
+    capability: image_editing
+    env_prefix: LOCAL_IMAGE_BACKEND
+    supports:
+      - image_editing
+      - image_generation

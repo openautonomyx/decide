@@ -1,0 +1,40 @@
+agents:
+  root:
+    model: ${ORCHESTRATOR_MODEL}
+    description: Autonomyx root orchestrator
+    instruction: |
+      Route research to researcher, environment work to operator,
+      and code work to coder_router.
+    sub_agents: [researcher, operator, coder_router]
+    toolsets:
+      - type: todo
+      - type: think
+      - type: memory
+
+  researcher:
+    model: ${RESEARCH_MODEL}
+    description: Research specialist
+    instruction: |
+      Gather documentation, references, APIs, and summarize findings.
+    toolsets:
+      - type: mcp
+        ref: docker:duckduckgo
+
+  operator:
+    model: ${OPS_MODEL}
+    description: Environment and Docker operator
+    instruction: |
+      Handle logs, shell commands, diagnostics, and environment operations.
+    toolsets:
+      - type: shell
+      - type: filesystem
+
+  coder_router:
+    model: ${CODER_ROUTER_MODEL}
+    description: Coding dispatcher
+    instruction: |
+      Send implementation, debugging, refactoring, and tests to the coding specialist.
+    toolsets:
+      - type: a2a
+        url: ${CLAUDE_CODER_URL}
+        name: claude-coder

@@ -1,0 +1,20 @@
+routing_policies:
+  - when:
+      capability: coding
+      quality: premium
+    use: claude_premium
+
+  - when:
+      capability: coding
+      locality: local_only
+    use: devstral_local
+
+  - when:
+      capability: image_editing
+      quality: premium
+    use: gpt_image
+
+  - when:
+      capability: image_editing
+      locality: local_only
+    use: local_image_backend
