@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import yaml
 
-BASE_DIR = Path("/workspace")
+BASE_DIR = Path(os.getenv("WORKSPACE_ROOT", "/workspace"))
 REGISTRY_PATH = BASE_DIR / "configs" / "backends" / "registry.yaml"
 POLICIES_PATH = BASE_DIR / "configs" / "backends" / "policies.yaml"
 
@@ -26,6 +26,13 @@ def get_env_backend_config(env_prefix: str) -> Dict[str, Any]:
     }
 
 
+def mask_backend_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    masked = dict(config)
+    if masked.get("api_key"):
+        masked["api_key"] = "***"
+    return masked
+
+
 def load_backend_registry() -> Dict[str, Any]:
     data = load_yaml(REGISTRY_PATH)
     backends = data.get("backends", {})
@@ -35,10 +42,22 @@ def load_backend_registry() -> Dict[str, Any]:
         env_prefix = meta.get("env_prefix", "")
         resolved[backend_id] = {
             **meta,
-            "config": get_env_backend_config(env_prefix) if env_prefix else {}
+            "id": backend_id,
+            "config": get_env_backend_config(env_prefix) if env_prefix else {},
         }
 
     return resolved
+
+
+def load_public_backend_registry() -> Dict[str, Any]:
+    registry = load_backend_registry()
+    return {
+        backend_id: {
+            **backend,
+            "config": mask_backend_config(backend.get("config", {})),
+        }
+        for backend_id, backend in registry.items()
+    }
 
 
 def load_routing_policies() -> Dict[str, Any]:

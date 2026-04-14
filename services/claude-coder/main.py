@@ -1,88 +1,129 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List
-import os
+from typing import Any, Dict, List, Optional
 
-from claude_agent_sdk import query
-from config import load_backend_registry, load_routing_policies
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
 
-app = FastAPI()
+from adapters import get_coding_backend
+from config import (
+    load_backend_registry,
+    load_public_backend_registry,
+    load_routing_policies,
+    mask_backend_config,
+)
+from router import BackendRoutingError, RouteDecision, select_backend
 
-CODING_SPECIALIST_MODEL = os.getenv("CODING_SPECIALIST_MODEL", "")
-WORKSPACE_ROOT = os.getenv("WORKSPACE_ROOT", "/workspace")
+app = FastAPI(title="Autonomyx Coding Backend Service")
 
 
 class CodingTask(BaseModel):
-    task_type: str
-    repo_path: str
+    task_type: str = "coding"
+    repo_path: str = "/workspace"
     goal: str
-    constraints: List[str] = []
-    acceptance_criteria: List[str] = []
+    capability: str = "coding"
+    quality: Optional[str] = None
+    locality: Optional[str] = None
+    preferred_backend: Optional[str] = None
+    fallback_order: List[str] = Field(default_factory=list)
+    constraints: List[str] = Field(default_factory=list)
+    acceptance_criteria: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+def _routing_request(task: CodingTask) -> Dict[str, Any]:
+    return task.model_dump(exclude_none=True)
+
+
+def _public_backend(backend: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        **backend,
+        "config": mask_backend_config(backend.get("config", {})),
+    }
+
+
+def _public_decision(decision: RouteDecision) -> Dict[str, Any]:
+    return {
+        "backend_id": decision.backend_id,
+        "reason": decision.reason,
+        "fallback_order": decision.fallback_order,
+        "backend": _public_backend(decision.backend),
+    }
+
+
+def _select_for_request(request: Dict[str, Any]) -> RouteDecision:
+    return select_backend(
+        request=request,
+        registry=load_backend_registry(),
+        policies=load_routing_policies(),
+    )
 
 
 @app.get("/.well-known/agent-card")
 def agent_card():
     return {
-        "name": "claude-coder",
-        "description": "Autonomyx coding specialist",
+        "name": "coding-service",
+        "description": "Autonomyx generic coding backend service",
         "url": "http://claude-coder:8080/invoke",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "skills": [
             {
                 "id": "coding",
                 "name": "coding",
-                "description": "Implements features, fixes bugs, writes tests, refactors code"
+                "description": "Routes coding tasks to configured coding backends",
             }
-        ]
+        ],
     }
 
 
 @app.get("/debug/backends")
 def debug_backends():
     return {
-        "registry": load_backend_registry(),
+        "registry": load_public_backend_registry(),
         "policies": load_routing_policies(),
     }
 
 
-async def run_agent(task: CodingTask) -> str:
-    prompt = f"""
-You are the Autonomyx coding specialist.
+@app.get("/debug/route")
+def debug_route(
+    capability: str = "coding",
+    quality: Optional[str] = None,
+    locality: Optional[str] = None,
+    preferred_backend: Optional[str] = None,
+    fallback_order: Optional[List[str]] = Query(default=None),
+):
+    request = {
+        "capability": capability,
+        "quality": quality,
+        "locality": locality,
+        "preferred_backend": preferred_backend,
+        "fallback_order": fallback_order or [],
+    }
+    request = {key: value for key, value in request.items() if value not in (None, [], "")}
 
-Task type: {task.task_type}
-Repository path: {task.repo_path}
-Goal: {task.goal}
+    try:
+        decision = _select_for_request(request)
+    except BackendRoutingError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-Constraints:
-{chr(10).join(f"- {c}" for c in task.constraints) if task.constraints else "- None"}
-
-Acceptance criteria:
-{chr(10).join(f"- {a}" for a in task.acceptance_criteria) if task.acceptance_criteria else "- None"}
-
-For now, analyze the task and return a concise execution plan.
-Do not assume missing details.
-"""
-    chunks = []
-    async for message in query(prompt):
-        chunks.append(str(message))
-    return "\n".join(chunks).strip()
+    return {
+        "sample_request": request,
+        "selection": _public_decision(decision),
+    }
 
 
 @app.post("/invoke")
 async def invoke(task: CodingTask):
-    if not CODING_SPECIALIST_MODEL:
-        raise HTTPException(status_code=500, detail="CODING_SPECIALIST_MODEL is not set")
-
     try:
-        result = await run_agent(task)
-        return {
-            "status": "success",
-            "summary": result or f"Processed coding task for goal: {task.goal}",
-            "model": CODING_SPECIALIST_MODEL,
-            "workspace_root": WORKSPACE_ROOT,
-            "files_changed": [],
-            "artifacts": {},
-            "next_actions": ["Add backend selection and structured tool use"]
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        decision = _select_for_request(_routing_request(task))
+    except BackendRoutingError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    backend = get_coding_backend(decision.backend_id, decision.backend)
+    result = await backend.run(task)
+
+    return {
+        **result,
+        "selected_backend": decision.backend_id,
+        "route_reason": decision.reason,
+        "backend_config": mask_backend_config(decision.backend.get("config", {})),
+        "capability": task.capability,
+    }
