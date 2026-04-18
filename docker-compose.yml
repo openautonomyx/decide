@@ -72,5 +72,38 @@ services:
       - "18090:8090"
     profiles: ["coding"]
 
+  # ─── MCP Fleet ────────────────────────────────────────────────────────────
+  # Opt-in via `docker compose --profile mcp up`. Each service wraps one
+  # external platform as MCP tools for the LangGraph orchestrator.
+  # Ports 3101–3112 on platform_internal network (prod); host-mapped for local dev.
+  # See services/_mcp_template/ for the base pattern.
+
+  liferay-mcp:
+    build: ./services/liferay-mcp
+    env_file:
+      - .env
+    environment:
+      MCP_SERVICE_NAME: liferay
+      MCP_BIND_PORT: "3101"
+      MCP_BASE_URL: ${LIFERAY_BASE_URL:-}
+      LIFERAY_USER: ${LIFERAY_USER:-}
+      LIFERAY_PASSWORD: ${LIFERAY_PASSWORD:-}
+    ports:
+      - "3101:3101"
+    profiles: ["mcp"]
+
+  # Additional MCPs (Tasks #6-14, #21, #22) — add as services/<name>-mcp/ lands:
+  # wordpress-mcp   → port 3102
+  # ghost-mcp       → port 3103   (existing at /Users/apple/mcpservers/ghost-mcp-server)
+  # postiz-mcp      → port 3104
+  # baserow-mcp     → port 3105
+  # webstudio-mcp   → port 3106
+  # teachable-mcp   → port 3107
+  # matomo-mcp      → port 3108
+  # mercur-mcp      → port 3109
+  # n8n-mcp         → port 3110
+  # hostinger-mcp   → port 3111   (existing at /Users/apple/mcpservers/hostinger-mcp)
+  # logto-mcp       → port 3112   (existing at /Users/apple/mcpservers/logto-mcp-server)
+
 volumes:
   pgdata:
