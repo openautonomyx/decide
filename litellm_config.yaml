@@ -1,0 +1,12 @@
+# LiteLLM Configuration
+# This config exposes models through an OpenAI-compatible endpoint
+# In production, update model_list with actual provider credentials
+model_list:
+  - model_name: devstral
+    litellm_params:
+      model: openai/gpt-3.5-turbo
+      api_key: ${OPENAI_API_KEY:-sk-dummy}
+      api_base: https://api.openai.com/v1
+
+general_settings:
+  master_key: null

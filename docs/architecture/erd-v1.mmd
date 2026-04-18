@@ -1,0 +1,223 @@
+erDiagram
+    %% Core Organization
+    tenant ||--o{ employee : has
+    tenant {
+        string id PK
+        string name
+        bool enabled
+        timestamp created_at
+    }
+    employee {
+        string id PK
+        string tenant_id FK
+        string email
+        string name
+    }
+    employee_identity {
+        string id PK
+        string employee_id FK
+        string job_title
+        string department
+        string seniority
+    }
+    
+    %% Agent Layer
+    employee ||--o{ employee_agent_assignment : owns
+    employee_agent_assignment {
+        string id PK
+        string employee_id FK
+        string agent_id FK
+        string role  "owner/supervisor/sponsor"
+    }
+    employee ||--o{ agent : has
+    agent {
+        string id PK
+        string tenant_id FK
+        string name
+        string type
+    }
+    agent_identity {
+        string id PK
+        string agent_id FK
+        string projected_title
+        string projected_department
+    }
+    agent ||--o{ agent_skill : has
+    agent_skill {
+        string id PK
+        string agent_id FK
+        string skill_code
+        string skill_name
+    }
+    agent ||--o{ agent_governance_profile : governed_by
+    agent_governance_profile {
+        string id PK
+        string agent_id FK
+        string prompt_profile_id
+        string guardrail_profile_id
+        string approval_profile_id
+    }
+    agent ||--o{ agent_relationship : relates_to
+    agent_relationship {
+        string id PK
+        string from_agent_id FK
+        string to_agent_id FK
+        string to_employee_id FK
+        string relationship_type
+    }
+    
+    %% Collaboration Containers
+    tenant ||--o{ product : has
+    tenant ||--o{ project : has
+    tenant ||--o{ group_entity : has
+    product {
+        string id PK
+        string tenant_id FK
+        string name
+        string strategy
+    }
+    project {
+        string id PK
+        string tenant_id FK
+        string name
+        date start_date
+        date end_date
+    }
+    group_entity {
+        string id PK
+        string tenant_id FK
+        string name
+        string type "community/interest/committee/guild"
+    }
+    group_entity ||--o{ group_membership : has
+    group_membership {
+        string id PK
+        string group_id FK
+        string employee_id FK
+        string agent_id FK
+    }
+    
+    %% Workflow Entities
+    project ||--o{ task : contains
+    task {
+        string id PK
+        string project_id FK
+        string title
+        string status
+        string assigned_to_employee_id FK
+        string assigned_to_agent_id FK
+    }
+    task ||--o{ task_dependency : depends_on
+    task ||--o{ deadline : has
+    task ||--o{ milestone_task : part_of
+    deadline {
+        string id PK
+        string task_id FK
+        datetime due_at
+    }
+    milestone {
+        string id PK
+        string project_id FK
+        string name
+        date target_date
+    }
+    milestone_task {
+        string id PK
+        string milestone_id FK
+        string task_id FK
+    }
+    
+    %% Channels
+    product ||--o{ channel : has_primary
+    group_entity ||--o{ channel : has_primary
+    channel {
+        string id PK
+        string context_type "product/project/group/task/direct"
+        string context_id FK
+        string name
+    }
+    channel ||--o{ channel_membership : has
+    channel_membership {
+        string id PK
+        string channel_id FK
+        string member_type "employee/agent/group"
+        string member_id FK
+        string role "owner/moderator/member/viewer"
+    }
+    channel ||--o{ channel_message : contains
+    
+    %% Decision & Control Plane
+    execution_request {
+        string id PK
+        string tenant_id FK
+        string goal
+        string capability
+        string quality
+        timestamp created_at
+    }
+    execution_request ||--o{ execution_request_metadata : has
+    execution_request_metadata {
+        string id PK
+        string execution_request_id FK
+        string key
+        string value
+    }
+    execution_request ||--o{ policy_resolution : resolved_to
+    execution_request ||--o{ backend_selection : routed_to
+    execution_request ||--o{ approval_request : requires
+    execution_request ||--o{ decision_record : decided_as
+    execution_request ||--o{ usage_record : consumed
+    execution_request ||--o{ memory_checkpoint : checkpointed
+    execution_request ||--o{ execution_history : audited
+    
+    approval_request {
+        string id PK
+        string execution_request_id FK
+        string status "pending/approved/denied"
+        string requested_by
+        string approver
+    }
+    
+    decision_record {
+        string id PK
+        string execution_request_id FK
+        string decision_type "approved_by_rule/rejected_by_rule/awaiting_human/approved_by_human/rejected_by_human"
+        string reason
+    }
+    
+    usage_record {
+        string id PK
+        string execution_request_id FK
+        string backend_used
+        int input_tokens
+        int output_tokens
+        float cost
+        int latency_ms
+    }
+    
+    override_record {
+        string id PK
+        string execution_request_id FK
+        string override_type
+        string applied_by
+        string reason
+    }
+    
+    %% Master Data
+    department_master {
+        string code PK
+        string name
+    }
+    job_title_master {
+        string code PK
+        string name
+    }
+    seniority_level_master {
+        string code PK
+        string name
+    }
+    sfia_skill_master {
+        string code PK
+        string name
+        string category
+    }
