@@ -68,6 +68,21 @@ app.include_router(r_memory.router, prefix=settings.api_prefix)
 app.include_router(r_skill.router, prefix=settings.api_prefix)
 
 
+# Demo static files
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+demo_dir = os.path.join(os.path.dirname(__file__), "..", "demo")
+
+@app.get("/demo")
+def demo_index():
+    """Serve demo interface"""
+    index_path = os.path.join(demo_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "Demo not found. Run from demo directory or build separately."}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

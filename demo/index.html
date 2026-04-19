@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decide Platform - Demo Interface</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        header { background: #fff; padding: 16px 24px; border-bottom: 1px solid #e0e0e0; margin-bottom: 24px; }
+        header h1 { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+        header .subtitle { color: #666; font-size: 14px; margin-top: 4px; }
+        
+        /* Nav */
+        .nav { display: flex; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
+        .nav-btn { padding: 10px 20px; border: none; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .nav-btn:hover { background: #f0f0f0; }
+        .nav-btn.active { background: #2563eb; color: #fff; }
+        
+        /* Cards */
+        .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card h2 { font-size: 18px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 6px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-group textarea { min-height: 100px; font-family: monospace; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #2563eb; }
+        
+        /* Buttons */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-secondary { background: #f1f5f9; color: #333; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-success { background: #16a34a; color: #fff; }
+        .btn-success:hover { background: #15803d; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { font-weight: 600; color: #555; background: #f9f9f9; }
+        tr:hover { background: #fafafa; }
+        
+        /* Status badges */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-error { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        
+        /* Grid */
+        .grid { display: grid; gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        
+        /* Sections */
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        /* Loading */
+        .loading { padding: 20px; text-align: center; color: #666; }
+        .loading::after { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Alerts */
+        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        
+        /* Activity log */
+        .activity-log { background: #1e1e1e; color: #ddd; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; max-height: 300px; overflow-y: auto; }
+        .activity-log .entry { padding: 4px 0; border-bottom: 1px solid #333; }
+        .activity-log .entry:last-child { border-bottom: none; }
+        .activity-log .time { color: #888; }
+        .activity-log .success { color: #4ade80; }
+        .activity-log .error { color: #f87171; }
+        .activity-log .info { color: #60a5fa; }
+        
+        /* Detail output */
+        .detail-output { background: #f8fafc; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; }
+        
+        /* Empty state */
+        .empty { padding: 40px; text-align: center; color: #888; }
+        
+        /* Flex utilities */
+        .flex { display: flex; gap: 12px; align-items: center; }
+        .flex-between { justify-content: space-between; }
+        
+        /* Tenant selector */
+        .tenant-selector { background: #fff; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tenant-selector select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 200px; }
+        
+        /* Run button */
+        .run-demo-btn { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        .run-demo-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+        
+        /* JSON preview */
+        .json-preview { background: #f1f5f9; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; max-height: 200px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Decide Platform Demo</h1>
+        <div class="subtitle">End-to-end platform demonstration interface</div>
+    </header>
+    
+    <div class="container">
+        <!-- Tenant Selector -->
+        <div class="tenant-selector">
+            <label><strong>Current Tenant:</strong></label>
+            <select id="tenantSelect" onchange="handleTenantChange()">
+                <option value="">-- Select Tenant --</option>
+            </select>
+            <button class="btn btn-secondary" onclick="createNewTenant()">+ New Tenant</button>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="nav">
+            <button class="nav-btn active" onclick="showSection('home')">Demo Home</button>
+            <button class="nav-btn" onclick="showSection('memory')">Memory Setup</button>
+            <button class="nav-btn" onclick="showSection('skill')">Skill Setup</button>
+            <button class="nav-btn" onclick="showSection('workflow')">Workflow Demo</button>
+            <button class="nav-btn" onclick="showSection('runs')">Run Detail</button>
+            <button class="run-demo-btn" onclick="runFullDemo()">🎯 Run Full Demo</button>
+        </div>
+        
+        <!-- Demo Home Section -->
+        <div id="home" class="section active">
+            <div class="card">
+                <h2>Welcome to the Decide Platform Demo</h2>
+                <p style="margin-bottom: 16px; color: #666;">This demo interface lets you walk through the complete platform flow visually.</p>
+                
+                <div class="grid grid-3">
+                    <div class="card" style="background: #f0f9ff;">
+                        <h3 style="color: #1e40af;">1. Create Tenant</h3>
+                        <p style="color: #555; font-size: 14px;">Select or create a tenant to isolated your demo data.</p>
+                    </div>
+                    <div class="card" style="background: #f0fdf4;">
+                        <h3 style="color: #166534;">2. Memory Setup</h3>
+                        <p style="color: #555; font-size: 14px;">Create memory spaces and entry facts, policies, and instructions.</p>
+                    </div>
+                    <div class="card" style="background: #fef3c7;">
+                        <h3 style="color: #92400e;">3. Skill Setup</h3>
+                        <p style="color: #555; font-size: 14px;">Define skills with versions for your workflows to use.</p>
+                    </div>
+                    <div class="card" style="background: #fdf4ff;">
+                        <h3 style="color: #9d174d;">4. Create Workflow</h3>
+                        <p style="color: #555; font-size: 14px;">Import or create a workflow definition.</p>
+                    </div>
+                    <div class="card" style="background: #fef2f2;">
+                        <h3 style="color: #991b1b;">5. Validate</h3>
+                        <p style="color: #555; font-size: 14px;">Run validation to ensure workflow is ready.</p>
+                    </div>
+                    <div class="card" style="background: #f5f3ff;">
+                        <h3 style="color: #6d28d9;">6. Execute</h3>
+                        <p style="color: #555; font-size: 14px;">Run the workflow and view results.</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 24px;">
+                    <h3>Quick Demo</h3>
+                    <p style="color: #666; margin-bottom: 16px;">Click the "Run Full Demo" button above to walk through the entire sequence automatically with prefilled demo data.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Activity Log</h2>
+                <div id="activityLog" class="activity-log">
+                    <div class="entry"><span class="time">--:--:--</span> <span class="info">Ready. Select a tenant or run the full demo.</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Memory Setup Section -->
+        <div id="memory" class="section">
+            <div class="grid grid-2">
+                <div>
+                    <div class="card">
+                        <h2>Create Memory Space</h2>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="memorySpaceName" placeholder="e.g., Product Knowledge">
+                        </div>
+                        <div class="form-group">
+                            <label>Scope Type</label>
+                            <select id="memorySpaceScope">
+                                <option value="organization">Organization</option>
+                                <option value="product">Product</option>
+                                <option value="workflow">Workflow</option>
+                                <option value="run">Run</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="memorySpaceDesc" placeholder="Optional description">
+                        </div>
+                        <button class="btn btn-primary" onclick="createMemorySpace()">Create Space</button>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Add Memory Entry</h2>
+                        <div class="form-group">
+                            <label>Select Space</label>
+                            <select id="memoryEntrySpace">
+                                <option value="">-- Select Space --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Memory Type</label>
+                            <select id="memoryEntryType">
+                                <option value="fact">Fact</option>
+                                <option value="policy">Policy</option>
+                                <option value="instruction">Instruction</option>
+                                <option value="summary">Summary</option>
+                                <option value="preference">Preference</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="memoryEntryTitle" placeholder="Entry title">
+                        </div>
+                        <div class="form-group">
+                            <label>Content</label>
+                            <textarea id="memoryEntryContent" placeholder="Enter memory content..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="createMemoryEntry()">Add Entry</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <h2>Memory Spaces</h2>
+                        <div id="memorySpacesList">
+                            <div class="empty">No memory spaces yet</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Memory Entries</h2>
+                        <div id="memoryEntriesList">
+                            <div class="empty">No memory entries yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Skill Setup Section -->
+        <div id="skill" class="section">
+            <div class="grid grid-2">
+                <div>
+                    <div class="card">
+                        <h2>Create Skill</h2>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="skillName" placeholder="e.g., Code Review">
+                        </div>
+                        <div class="form-group">
+                            <label>Slug</label>
+                            <input type="text" id="skillSlug" placeholder="e.g., code-review">
+                        </div>
+                        <div class="form-group">
+                            <label>Scope Type</label>
+                            <select id="skillScope">
+                                <option value="organization">Organization</option>
+                                <option value="product">Product</option>
+                                <option value="workflow">Workflow</option>
+                                <option value="global">Global</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Skill Type</label>
+                            <select id="skillType">
+                                <option value="prompt_skill">Prompt Skill</option>
+                                <option value="procedure">Procedure</option>
+                                <option value="tool_sequence">Tool Sequence</option>
+                                <option value="workflow_fragment">Workflow Fragment</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="skillDesc" placeholder="Optional description">
+                        </div>
+                        <button class="btn btn-primary" onclick="createSkill()">Create Skill</button>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Add Skill Version</h2>
+                        <div class="form-group">
+                            <label>Select Skill</label>
+                            <select id="skillVersionSkill">
+                                <option value="">-- Select Skill --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Version Number</label>
+                            <input type="number" id="skillVersionNumber" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Content JSON</label>
+                            <textarea id="skillVersionContent" placeholder='{"prompt": "..."}'></textarea>
+                        </div>
+                        <label><input type="checkbox" id="skillVersionCurrent"> Set as Current Version</label>
+                        <button class="btn btn-primary" onclick="createSkillVersion()" style="margin-top: 12px;">Add Version</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <h2>Skills</h2>
+                        <div id="skillsList">
+                            <div class="empty">No skills yet</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Skill Resolver</h2>
+                        <p style="color: #666; margin-bottom: 12px;">Test skill resolution for current tenant:</p>
+                        <button class="btn btn-secondary" onclick="resolveSkills()">Resolve Skills</button>
+                        <div id="resolvedSkills" class="json-preview" style="margin-top: 12px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workflow Demo Section -->
+        <div id="workflow" class="section">
+            <div class="grid grid-2">
+                <div>
+                    <div class="card">
+                        <h2>Import Workflow (LangFlow JSON)</h2>
+                        <div class="form-group">
+                            <label>Workflow Name</label>
+                            <input type="text" id="workflowName" placeholder="e.g., Simple Publish Flow">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="workflowDesc" placeholder="Optional description">
+                        </div>
+                        <div class="form-group">
+                            <label>LangFlow JSON</label>
+                            <textarea id="workflowFlowData" style="min-height: 200px;">{"nodes": [], "edges": []}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="importWorkflow()">Import Workflow</button>
+                        <button class="btn btn-secondary" onclick="loadSampleWorkflow()" style="margin-left: 8px;">Load Sample</button>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Workflow Actions</h2>
+                        <div class="form-group">
+                            <label>Select Workflow</label>
+                            <select id="workflowSelect">
+                                <option value="">-- Select Workflow --</option>
+                            </select>
+                        </div>
+                        <div class="flex">
+                            <button class="btn btn-primary" onclick="validateWorkflow()">Validate</button>
+                            <button class="btn btn-success" onclick="runWorkflow()">Run Workflow</button>
+                        </div>
+                        <div id="validationResult" style="margin-top: 16px;"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <h2>Workflows</h2>
+                        <div id="workflowsList">
+                            <div class="empty">No workflows yet</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>Workflow Resolver</h2>
+                        <p style="color: #666; margin-bottom: 12px;">Resolve memory and skills for a workflow run:</p>
+                        <button class="btn btn-secondary" onclick="resolveWorkflowContext()">Resolve Context</button>
+                        <div id="workflowContextResult" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Run Detail Section -->
+        <div id="runs" class="section">
+            <div class="card">
+                <h2>Run History</h2>
+                <table id="runsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Workflow</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align: center;">No runs yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card" id="runDetailCard" style="display: none;">
+                <h2>Run Detail: <span id="runDetailId"></span></h2>
+                
+                <div class="grid grid-3" style="margin-bottom: 20px;">
+                    <div>
+                        <strong>Status:</strong><br>
+                        <span id="runDetailStatus"></span>
+                    </div>
+                    <div>
+                        <strong>Started:</strong><br>
+                        <span id="runDetailStarted"></span>
+                    </div>
+                    <div>
+                        <strong>Completed:</strong><br>
+                        <span id="runDetailCompleted"></span>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <strong>Resolved Memory:</strong>
+                    <div id="runDetailMemory" class="json-preview" style="margin-top: 8px;"></div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <strong>Resolved Skills:</strong>
+                    <div id="runDetailSkills" class="json-preview" style="margin-top: 8px;"></div>
+                </div>
+                
+                <div>
+                    <strong>Output:</strong>
+                    <div id="runDetailOutput" class="detail-output" style="margin-top: 8px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // API Configuration
+        const API_BASE = '/api/v1';
+        let currentTenantId = null;
+        let demoData = { tenantId: null, memorySpaceId: null, memoryEntryIds: [], skillId: null, skillVersionId: null, workflowId: null, runId: null };
+        
+        // Navigation
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (id === 'memory') loadMemoryData();
+            if (id === 'skill') loadSkillData();
+            if (id === 'workflow') loadWorkflowData();
+            if (id === 'runs') loadRunsData();
+        }
+        
+        // Activity Log
+        function log(message, type = 'info') {
+            const log = document.getElementById('activityLog');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML = `<div class="entry"><span class="time">${time}</span> <span class="${type}">${message}</span></div>` + log.innerHTML;
+        }
+        
+        // API Helpers
+        async function apiCall(endpoint, options = {}) {
+            const url = API_BASE + endpoint;
+            const config = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: config
+                });
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(error.detail || `HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+                throw e;
+            }
+        }
+        
+        // Tenant Handling
+        async function loadTenants() {
+            try {
+                const result = await apiCall('/tenants');
+                const select = document.getElementById('tenantSelect');
+                select.innerHTML = '<option value="">-- Select Tenant --</option>';
+                result.items.forEach(t => {
+                    select.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                });
+            } catch (e) {
+                console.error('Failed to load tenants:', e);
+            }
+        }
+        
+        function handleTenantChange() {
+            currentTenantId = document.getElementById('tenantSelect').value;
+            if (currentTenantId) {
+                demoData.tenantId = currentTenantId;
+                log(`Tenant selected: ${currentTenantId}`, 'success');
+            }
+        }
+        
+        async function createNewTenant() {
+            const name = 'Demo Tenant ' + new Date().toLocaleTimeString();
+            try {
+                const tenant = await apiCall('/tenants', {
+                    method: 'POST',
+                    body: JSON.stringify({ name })
+                });
+                currentTenantId = tenant.id;
+                demoData.tenantId = tenant.id;
+                document.getElementById('tenantSelect').value = tenant.id;
+                await loadTenants();
+                log(`Created tenant: ${tenant.name}`, 'success');
+            } catch (e) {
+                alert('Failed to create tenant: ' + e.message);
+            }
+        }
+        
+        // Memory Functions
+        async function loadMemoryData() {
+            if (!currentTenantId) {
+                document.getElementById('memorySpacesList').innerHTML = '<div class="empty">Select a tenant first</div>';
+                return;
+            }
+            
+            try {
+                const spaces = await apiCall(`/memory/spaces?tenant_id=${currentTenantId}`);
+                const entries = await apiCall(`/memory/entries?tenant_id=${currentTenantId}`);
+                
+                // Update space dropdown
+                const spaceSelect = document.getElementById('memoryEntrySpace');
+                spaceSelect.innerHTML = '<option value="">-- Select Space --</option>';
+                spaces.items.forEach(s => {
+                    spaceSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+                
+                // Update spaces list
+                const spacesList = document.getElementById('memorySpacesList');
+                if (spaces.items.length === 0) {
+                    spacesList.innerHTML = '<div class="empty">No memory spaces</div>';
+                } else {
+                    spacesList.innerHTML = `<table><thead><tr><th>Name</th><th>Scope</th><th>Entries</th></tr></thead><tbody>${
+                        spaces.items.map(s => {
+                            const count = entries.items.filter(e => e.memory_space_id === s.id).length;
+                            return `<tr><td>${s.name}</td><td>${s.scope_type}</td><td>${count}</td></tr>`;
+                        }).join('')
+                    }</tbody></table>`;
+                }
+                
+                // Update entries list
+                const entriesList = document.getElementById('memoryEntriesList');
+                if (entries.items.length === 0) {
+                    entriesList.innerHTML = '<div class="empty">No memory entries</div>';
+                } else {
+                    entriesList.innerHTML = `<table><thead><tr><th>Title</th><th>Type</th><th>Space</th></tr></thead><tbody>${
+                        entries.items.map(e => {
+                            const space = spaces.items.find(s => s.id === e.memory_space_id);
+                            return `<tr><td>${e.title}</td><td>${e.memory_type}</td><td>${space?.name || 'N/A'}</td></tr>`;
+                        }).join('')
+                    }</tbody></table>`;
+                }
+            } catch (e) {
+                console.error('Failed to load memory data:', e);
+            }
+        }
+        
+        async function createMemorySpace() {
+            if (!currentTenantId) return alert('Select a tenant first');
+            
+            const data = {
+                tenant_id: currentTenantId,
+                name: document.getElementById('memorySpaceName').value,
+                scope_type: document.getElementById('memorySpaceScope').value,
+                description: document.getElementById('memorySpaceDesc').value
+            };
+            
+            try {
+                const space = await apiCall('/memory/spaces', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                demoData.memorySpaceId = space.id;
+                log(`Created memory space: ${space.name}`, 'success');
+                document.getElementById('memorySpaceName').value = '';
+                loadMemoryData();
+            } catch (e) {
+                alert('Failed to create memory space: ' + e.message);
+            }
+        }
+        
+        async function createMemoryEntry() {
+            if (!currentTenantId) return alert('Select a tenant first');
+            
+            const spaceId = document.getElementById('memoryEntrySpace').value;
+            if (!spaceId) return alert('Select a space first');
+            
+            const data = {
+                memory_space_id: spaceId,
+                memory_type: document.getElementById('memoryEntryType').value,
+                title: document.getElementById('memoryEntryTitle').value,
+                content: document.getElementById('memoryEntryContent').value
+            };
+            
+            try {
+                const entry = await apiCall('/memory/entries', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                demoData.memoryEntryIds.push(entry.id);
+                log(`Created memory entry: ${entry.title}`, 'success');
+                document.getElementById('memoryEntryTitle').value = '';
+                document.getElementById('memoryEntryContent').value = '';
+                loadMemoryData();
+            } catch (e) {
+                alert('Failed to create memory entry: ' + e.message);
+            }
+        }
+        
+        // Skill Functions
+        async function loadSkillData() {
+            if (!currentTenantId) {
+                document.getElementById('skillsList').innerHTML = '<div class="empty">Select a tenant first</div>';
+                return;
+            }
+            
+            try {
+                const skills = await apiCall(`/skills?tenant_id=${currentTenantId}`);
+                
+                // Update skill dropdown
+                const skillSelect = document.getElementById('skillVersionSkill');
+                skillSelect.innerHTML = '<option value="">-- Select Skill --</option>';
+                skills.items.forEach(s => {
+                    skillSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+                
+                // Update skills list
+                const skillsList = document.getElementById('skillsList');
+                if (skills.items.length === 0) {
+                    skillsList.innerHTML = '<div class="empty">No skills</div>';
+                } else {
+                    skillsList.innerHTML = `<table><thead><tr><th>Name</th><th>Type</th><th>Status</th></tr></thead><tbody>${
+                        skills.items.map(s => `<tr><td>${s.name}</td><td>${s.skill_type}</td><td><span class="badge badge-${s.status === 'published' ? 'success' : 'warning'}">${s.status}</span></td></tr>`).join('')
+                    }</tbody></table>`;
+                }
+            } catch (e) {
+                console.error('Failed to load skills:', e);
+            }
+        }
+        
+        async function createSkill() {
+            if (!currentTenantId) return alert('Select a tenant first');
+            
+            const data = {
+                tenant_id: currentTenantId,
+                name: document.getElementById('skillName').value,
+                slug: document.getElementById('skillSlug').value,
+                scope_type: document.getElementById('skillScope').value,
+                skill_type: document.getElementById('skillType').value,
+                description: document.getElementById('skillDesc').value
+            };
+            
+            try {
+                const skill = await apiCall('/skills', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                demoData.skillId = skill.id;
+                log(`Created skill: ${skill.name}`, 'success');
+                document.getElementById('skillName').value = '';
+                document.getElementById('skillSlug').value = '';
+                loadSkillData();
+            } catch (e) {
+                alert('Failed to create skill: ' + e.message);
+            }
+        }
+        
+        async function createSkillVersion() {
+            const skillId = document.getElementById('skillVersionSkill').value;
+            if (!skillId) return alert('Select a skill first');
+            
+            const data = {
+                skill_id: skillId,
+                version_number: parseInt(document.getElementById('skillVersionNumber').value),
+                content_json: document.getElementById('skillVersionContent').value,
+                is_current: document.getElementById('skillVersionCurrent').checked
+            };
+            
+            try {
+                const version = await apiCall('/skills/' + skillId + '/versions', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                demoData.skillVersionId = version.id;
+                log(`Created skill version ${version.version_number}`, 'success');
+                loadSkillData();
+            } catch (e) {
+                alert('Failed to create skill version: ' + e.message);
+            }
+        }
+        
+        async function resolveSkills() {
+            if (!currentTenantId) return alert('Select a tenant first');
+            
+            try {
+                const result = await apiCall('/skills/resolve', {
+                    method: 'POST',
+                    body: JSON.stringify({ tenant_id: currentTenantId, scope_type: 'organization' })
+                });
+                const el = document.getElementById('resolvedSkills');
+                el.style.display = 'block';
+                el.textContent = JSON.stringify(result, null, 2);
+                log(`Resolved ${result.total} skills`, 'success');
+            } catch (e) {
+                alert('Failed to resolve skills: ' + e.message);
+            }
+        }
+        
+        // Workflow Functions
+        async function loadWorkflowData() {
+            if (!currentTenantId) {
+                document.getElementById('workflowsList').innerHTML = '<div class="empty">Select a tenant first</div>';
+                return;
+            }
+            
+            try {
+                const workflows = await apiCall(`/workflows?tenant_id=${currentTenantId}`);
+                cachedWorkflows = workflows.items;
+                
+                // Update workflow dropdown
+                const wfSelect = document.getElementById('workflowSelect');
+                wfSelect.innerHTML = '<option value="">-- Select Workflow --</option>';
+                workflows.items.forEach(w => {
+                    wfSelect.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                });
+                
+                // Update workflows list
+                const wfList = document.getElementById('workflowsList');
+                if (workflows.items.length === 0) {
+                    wfList.innerHTML = '<div class="empty">No workflows</div>';
+                } else {
+                    wfList.innerHTML = `<table><thead><tr><th>Name</th><th>Status</th><th>Version</th></tr></thead><tbody>${
+                        workflows.items.map(w => `<tr><td>${w.name}</td><td><span class="badge badge-${w.status === 'published' ? 'success' : 'warning'}">${w.status}</span></td><td>${w.version_number || '-'}</td></tr>`).join('')
+                    }</tbody></table>`;
+                }
+            } catch (e) {
+                console.error('Failed to load workflows:', e);
+            }
+        }
+        
+        function loadSampleWorkflow() {
+            const sample = {
+                "nodes": [
+                    { "id": "start_1", "type": "start", "data": { "label": "Start" } },
+                    { "id": "llm_1", "type": "llm", "data": { "label": "Process Request", "model": "claude-3-5-sonnet-20241022", "system_prompt": "You are a helpful assistant." } },
+                    { "id": "end_1", "type": "end", "data": { "label": "End" } }
+                ],
+                "edges": [
+                    { "source": "start_1", "target": "llm_1" },
+                    { "source": "llm_1", "target": "end_1" }
+                ]
+            };
+            document.getElementById('workflowFlowData').value = JSON.stringify(sample, null, 2);
+            document.getElementById('workflowName').value = 'Simple Request Flow';
+            document.getElementById('workflowDesc').value = 'A basic flow that processes a request';
+        }
+        
+        async function importWorkflow() {
+            if (!currentTenantId) return alert('Select a tenant first');
+            
+            const data = {
+                tenant_id: currentTenantId,
+                name: document.getElementById('workflowName').value,
+                description: document.getElementById('workflowDesc').value,
+                flow_data: JSON.parse(document.getElementById('workflowFlowData').value)
+            };
+            
+            try {
+                const result = await apiCall('/workflows/import/langflow', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                demoData.workflowId = result.workflow_id || result.id;
+                log(`Imported workflow: ${data.name}`, 'success');
+                document.getElementById('validationResult').innerHTML = `<div class="alert alert-success">Imported successfully: ${result.node_count} nodes, ${result.edge_count} edges</div>`;
+                loadWorkflowData();
+            } catch (e) {
+                alert('Failed to import workflow: ' + e.message);
+            }
+        }
+        
+        async function validateWorkflow() {
+            const workflowId = document.getElementById('workflowSelect').value;
+            if (!workflowId) return alert('Select a workflow first');
+            
+            try {
+                const result = await apiCall(`/workflows/${workflowId}/validate`, {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                
+                const issuesList = result.issues.map(i => `<div>• ${i.type}: ${i.message}</div>`).join('');
+                const alertClass = result.is_valid ? 'alert-success' : 'alert-error';
+                document.getElementById('validationResult').innerHTML = `<div class="alert ${alertClass}">${result.is_valid ? '✓ Valid' : '✗ Invalid'}</div>${issuesList}`;
+                log(`Workflow ${result.is_valid ? 'valid' : 'invalid'}`, result.is_valid ? 'success' : 'error');
+            } catch (e) {
+                alert('Failed to validate workflow: ' + e.message);
+            }
+        }
+        
+        async function runWorkflow() {
+            const workflowId = document.getElementById('workflowSelect').value;
+            if (!workflowId) return alert('Select a workflow first');
+            
+            try {
+                const result = await apiCall(`/workflows/${workflowId}/run`, {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                demoData.runId = result.run_id;
+                log(`Running workflow (Run ID: ${result.run_id})`, 'success');
+                
+                // Poll for completion
+                pollRunStatus(result.run_id);
+            } catch (e) {
+                alert('Failed to run workflow: ' + e.message);
+            }
+        }
+        
+        async function pollRunStatus(runId) {
+            const checkStatus = async () => {
+                try {
+                    const detail = await apiCall(`/workflows/${demoData.workflowId}/runs/${runId}`);
+                    
+                    if (detail.status === 'completed' || detail.status === 'failed') {
+                        log(`Run ${detail.status}`, detail.status === 'completed' ? 'success' : 'error');
+                        loadRunsData();
+                    } else {
+                        setTimeout(checkStatus, 2000);
+                    }
+                } catch (e) {
+                    console.error('Poll error:', e);
+                }
+            };
+            setTimeout(checkStatus, 2000);
+        }
+        
+        async function resolveWorkflowContext() {
+            const workflowId = document.getElementById('workflowSelect').value;
+            if (!workflowId) return alert('Select a workflow first');
+            
+            try {
+                const memoryResult = await apiCall('/memory/resolve', {
+                    method: 'POST',
+                    body: JSON.stringify({ tenant_id: currentTenantId, scope_type: 'workflow', scope_id: workflowId })
+                });
+                const skillsResult = await apiCall('/skills/resolve', {
+                    method: 'POST',
+                    body: JSON.stringify({ tenant_id: currentTenantId, workflow_id: workflowId })
+                });
+                
+                const output = document.getElementById('workflowContextResult');
+                output.innerHTML = `
+                    <div class="json-preview" style="margin-top: 8px;"><strong>Memory:</strong> ${memoryResult.total} items</div>
+                    <div class="json-preview" style="margin-top: 8px;"><strong>Skills:</strong> ${skillsResult.total} items</div>
+                `;
+                log(`Resolved context: ${memoryResult.total} memory, ${skillsResult.total} skills`, 'success');
+            } catch (e) {
+                alert('Failed to resolve context: ' + e.message);
+            }
+        }
+        
+        // Runs Functions
+        async function loadRunsData() {
+            if (!currentTenantId) return;
+            
+            try {
+                const runs = await apiCall(`/workflows/runs?tenant_id=${currentTenantId}`);
+                const tbody = document.querySelector('#runsTable tbody');
+                
+                if (runs.items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No runs yet</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = runs.items.map(r => `
+                    <tr>
+                        <td>${r.id.substring(0, 8)}...</td>
+                        <td>${r.workflow_name || r.workflow_id?.substring(0, 8)}...</td>
+                        <td><span class="badge badge-${r.status === 'completed' ? 'success' : r.status === 'failed' ? 'error' : 'info'}">${r.status}</span></td>
+                        <td>${new Date(r.started_at).toLocaleString()}</td>
+                        <td><button class="btn btn-secondary" onclick="viewRunDetail('${r.workflow_id}', '${r.id}')">View</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to load runs:', e);
+            }
+        }
+        
+        async function viewRunDetail(workflowId, runId) {
+            try {
+                const detail = await apiCall(`/workflows/${workflowId}/runs/${runId}`);
+                
+                document.getElementById('runDetailCard').style.display = 'block';
+                document.getElementById('runDetailId').textContent = runId.substring(0, 8) + '...';
+                
+                const statusBadge = detail.status === 'completed' ? 'badge-success' : detail.status === 'failed' ? 'badge-error' : 'badge-info';
+                document.getElementById('runDetailStatus').innerHTML = `<span class="badge badge-${statusBadge}">${detail.status}</span>`;
+                document.getElementById('runDetailStarted').textContent = new Date(detail.started_at).toLocaleString();
+                document.getElementById('runDetailCompleted').textContent = detail.completed_at ? new Date(detail.completed_at).toLocaleString() : '-';
+                
+                // Display resolved data
+                document.getElementById('runDetailMemory').textContent = detail.memory_context ? JSON.stringify(detail.memory_context, null, 2) : 'None';
+                document.getElementById('runDetailSkills').textContent = detail.resolved_skills ? JSON.stringify(detail.resolved_skills, null, 2) : 'None';
+                document.getElementById('runDetailOutput').textContent = detail.final_output || detail.error_message || detail.error || 'No output';
+                
+                // Show runs section
+                showSection('runs');
+            } catch (e) {
+                alert('Failed to load run detail: ' + e.message);
+            }
+        }
+        
+        // Full Demo Sequence
+        async function runFullDemo() {
+            if (!currentTenantId) {
+                // Create tenant
+                const name = 'Demo Tenant ' + new Date().toLocaleTimeString();
+                const tenant = await apiCall('/tenants', { method: 'POST', body: JSON.stringify({ name }) });
+                currentTenantId = tenant.id;
+                demoData.tenantId = tenant.id;
+                document.getElementById('tenantSelect').value = tenant.id;
+                await loadTenants();
+                log(`Created tenant: ${tenant.name}`, 'success');
+            }
+            
+            // Step 1: Create Memory Space
+            log('Creating memory space...');
+            const space = await apiCall('/memory/spaces', {
+                method: 'POST',
+                body: JSON.stringify({
+                    tenant_id: currentTenantId,
+                    name: 'Product Knowledge',
+                    scope_type: 'organization',
+                    description: 'Core product knowledge base'
+                })
+            });
+            demoData.memorySpaceId = space.id;
+            log(`Created memory space: ${space.name}`, 'success');
+            
+            // Step 2: Add Memory Entries
+            const entries = [
+                { title: 'Company Mission', type: 'fact', content: 'To empower teams to build amazing software.' },
+                { title: 'Code Review Policy', type: 'policy', content: 'All PRs require at least one approval.' },
+                { title: 'Response Time SLA', type: 'policy', content: 'Respond to customer issues within 24 hours.' }
+            ];
+            
+            for (const e of entries) {
+                const entry = await apiCall('/memory/entries', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        tenant_id: currentTenantId,
+                        memory_space_id: space.id,
+                        memory_type: e.type,
+                        title: e.title,
+                        content: e.content
+                    })
+                });
+                demoData.memoryEntryIds.push(entry.id);
+            }
+            log(`Created ${entries.length} memory entries`, 'success');
+            
+            // Step 3: Create Skill
+            log('Creating skill...');
+            const skill = await apiCall('/skills', {
+                method: 'POST',
+                body: JSON.stringify({
+                    tenant_id: currentTenantId,
+                    name: 'Code Review',
+                    slug: 'code-review',
+                    scope_type: 'organization',
+                    skill_type: 'prompt_skill',
+                    description: 'AI-powered code review assistant'
+                })
+            });
+            demoData.skillId = skill.id;
+            log(`Created skill: ${skill.name}`, 'success');
+            
+            // Step 4: Add Skill Version
+            const version = await apiCall('/skills/' + skillId + '/versions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    skill_id: skill.id,
+                    version_number: 1,
+                    content_json: JSON.stringify({ prompt: 'Review the following code for issues...' }),
+                    is_current: true
+                })
+            });
+            demoData.skillVersionId = version.id;
+            log('Created skill version 1', 'success');
+            
+            // Step 5: Import Workflow
+            log('Importing workflow...');
+            const workflow = await apiCall('/workflows/import/langflow', {
+                method: 'POST',
+                body: JSON.stringify({
+                    tenant_id: currentTenantId,
+                    name: 'Demo Publish Flow',
+                    description: 'A simple demo workflow',
+                    flow_data: {
+                        nodes: [
+                            { id: 'start', type: 'start', data: { label: 'Start' } },
+                            { id: 'llm', type: 'llm', data: { label: 'Process', model: 'claude-3-5-sonnet-20241022' } },
+                            { id: 'end', type: 'end', data: { label: 'Done' } }
+                        ],
+                        edges: [
+                            { source: 'start', target: 'llm' },
+                            { source: 'llm', target: 'end' }
+                        ]
+                    }
+                })
+            });
+            demoData.workflowId = workflow.workflow_id;
+            log(`Imported workflow: ${workflow.workflow_id}`, 'success');
+            
+            // Step 6: Validate
+            log('Validating workflow...');
+            try {
+                const validation = await apiCall(`/workflows/${workflow.workflow_id}/validate`, {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                if (validation.is_valid) {
+                    log('Workflow is valid', 'success');
+                } else {
+                    log(`Validation issues: ${validation.issues.length}`, 'error');
+                }
+            } catch (e) {
+                log('Validation skipped or failed: ' + e.message, 'info');
+            }
+            
+            // Step 7: Run (using demo mode, may not execute fully)
+            log('Starting workflow run...');
+            try {
+                const run = await apiCall(`/workflows/${workflow.workflow_id}/run`, {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                demoData.runId = run.run_id;
+                log(`Run started: ${run.run_id}`, 'success');
+                
+                // Show final resolution
+                setTimeout(async () => {
+                    log('Resolving final context...');
+                    const memoryRes = await apiCall('/memory/resolve', {
+                        method: 'POST',
+                        body: JSON.stringify({ tenant_id: currentTenantId, scope_type: 'organization' })
+                    });
+                    const skillsRes = await apiCall('/skills/resolve', {
+                        method: 'POST',
+                        body: JSON.stringify({ tenant_id: currentTenantId, scope_type: 'organization' })
+                    });
+                    
+                    document.getElementById('runDetailMemory').textContent = JSON.stringify(memoryRes.items.length + ' memory entries resolved', null, 2);
+                    document.getElementById('runDetailSkills').textContent = JSON.stringify(skillsRes.items.length + ' skills resolved', null, 2);
+                    
+                    log(`✓ Full demo complete!`, 'success');
+                    showSection('runs');
+                }, 2000);
+            } catch (e) {
+                log('Run may require additional setup: ' + e.message, 'info');
+                showSection('runs');
+            }
+        }
+        
+        // Initialize
+        let cachedWorkflows = [];
+        async function getFirstWorkflow() {
+            if (!currentTenantId) return '';
+            try {
+                const wf = await apiCall(`/workflows?tenant_id=${currentTenantId}`);
+                cachedWorkflows = wf.items;
+                return wf.items.length > 0 ? wf.items[0].id : '';
+            } catch { return ''; }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTenants();
+        });
+    </script>
+</body>
+</html>

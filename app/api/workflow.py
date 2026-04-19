@@ -32,6 +32,56 @@ router = APIRouter(prefix="/workflows", tags=["workflows"])
 SUPPORTED_NODE_TYPES = {"start", "llm", "tool", "condition", "human_approval", "end"}
 
 
+# Workflow Listing Schemas
+class WorkflowListResponse(BaseModel):
+    items: list
+    total: int = 0
+
+
+class WorkflowListParams(BaseModel):
+    tenant_id: str
+    skip: int = 0
+    limit: int = 100
+
+
+@router.get("", response_model=WorkflowListResponse)
+def list_workflows(tenant_id: str = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """List all workflows for a tenant."""
+    query = db.query(WorkflowDefinition)
+    if tenant_id:
+        query = query.filter(WorkflowDefinition.tenant_id == tenant_id)
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
+    
+    # Build response items with version info
+    result_items = []
+    for wf in items:
+        # Get current version
+        current_version = None
+        for v in wf.versions:
+            if v.is_current:
+                current_version = {
+                    "id": v.id,
+                    "version_number": v.version_number,
+                    "is_current": v.is_current
+                }
+                break
+        
+        result_items.append({
+            "id": wf.id,
+            "tenant_id": wf.tenant_id,
+            "name": wf.name,
+            "description": wf.description,
+            "source_type": wf.source_type,
+            "is_published": wf.is_published,
+            "created_at": wf.created_at.isoformat() if wf.created_at else None,
+            "updated_at": wf.updated_at.isoformat() if wf.updated_at else None,
+            "version": current_version
+        })
+    
+    return WorkflowListResponse(items=result_items, total=total)
+
+
 def _evaluate_identity_for_workflow(
     db: Session,
     workflow_id: str,
@@ -793,6 +843,43 @@ def run_workflow(
         workflow_id=workflow_id,
         status=run.status,
         final_output=run.final_output,
+    )
+
+
+class RunsListResponse(BaseModel):
+    items: list
+    total: int = 0
+
+
+@router.get("/{workflow_id}/runs", response_model=RunsListResponse)
+def list_workflow_runs(workflow_id: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """List all runs for a workflow."""
+    # Verify workflow exists
+    workflow = db.query(WorkflowDefinition).filter(
+        WorkflowDefinition.id == workflow_id
+    ).first()
+    if not workflow:
+        raise HTTPException(404, "Workflow not found")
+    
+    query = db.query(WorkflowRun).filter(WorkflowRun.workflow_id == workflow_id)
+    total = query.count()
+    items = query.order_by(WorkflowRun.started_at.desc()).offset(skip).limit(limit).all()
+    
+    return RunsListResponse(
+        items=[
+            {
+                "id": r.id,
+                "workflow_id": r.workflow_id,
+                "version_id": r.version_id,
+                "status": r.status,
+                "final_output": r.final_output,
+                "started_at": r.started_at.isoformat() if r.started_at else None,
+                "completed_at": r.completed_at.isoformat() if r.completed_at else None,
+                "error_message": r.error_message,
+            }
+            for r in items
+        ],
+        total=total
     )
 
 
