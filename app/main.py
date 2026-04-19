@@ -43,6 +43,7 @@ from app.api import runtime as r_runtime
 from app.api import skill as r_skill
 from app.api import tool as r_tool
 from app.api import context as r_context
+from app.api import decision as r_decision
 
 app.include_router(r_tenants.router, prefix=settings.api_prefix)
 app.include_router(r_employees.router, prefix=settings.api_prefix)
@@ -54,6 +55,7 @@ app.include_router(r_runtime.router, prefix=settings.api_prefix)
 app.include_router(r_skill.router, prefix=settings.api_prefix)
 app.include_router(r_tool.router, prefix=settings.api_prefix)
 app.include_router(r_context.router, prefix=settings.api_prefix)
+app.include_router(r_decision.router, prefix=settings.api_prefix)
 
 
 if __name__ == "__main__":
