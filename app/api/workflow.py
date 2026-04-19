@@ -815,6 +815,7 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
     memory_context = json.loads(run.memory_context_json or "[]")
     memory_read_ids = json.loads(run.memory_read_ids_json or "[]")
     memory_written_ids = json.loads(run.memory_written_ids_json or "[]")
+
     workflow = db.query(WorkflowDefinition).filter(WorkflowDefinition.id == workflow_id).first()
     resolved_skills = _resolve_skills_for_context(
         db,
@@ -823,6 +824,8 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         product_id=None,
         agent_role=None,
     ) if workflow else []
+
+
     
     return RunDetailResponse(
         id=run.id,
@@ -849,5 +852,8 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         memory_context=memory_context,
         memory_read_ids=memory_read_ids,
         memory_written_ids=memory_written_ids,
+
         resolved_skills=resolved_skills,
+
+
     )

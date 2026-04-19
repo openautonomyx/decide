@@ -1,5 +1,6 @@
 import uuid
 
+<<<<<<< HEAD
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -43,6 +44,10 @@ def client_and_db():
 
     app.dependency_overrides.clear()
 
+=======
+from app.models.tenant_employee import Tenant
+
+>>>>>>> origin/main
 
 def _create_workflow(client, tenant_id: str) -> str:
     flow_data = {
@@ -56,13 +61,18 @@ def _create_workflow(client, tenant_id: str) -> str:
         "/api/v1/workflows/import/langflow",
         json={"tenant_id": tenant_id, "name": f"wf-{tenant_id}", "flow_data": flow_data},
     )
+<<<<<<< HEAD
     assert imported.status_code == 201, imported.text
+=======
+    assert imported.status_code in [200, 201], imported.text
+>>>>>>> origin/main
     workflow_id = imported.json()["workflow_id"]
 
     validated = client.post(f"/api/v1/workflows/{workflow_id}/validate")
     assert validated.status_code == 200, validated.text
 
     published = client.post(f"/api/v1/workflows/{workflow_id}/publish")
+<<<<<<< HEAD
     assert published.status_code == 201, published.text
     return workflow_id
 
@@ -80,6 +90,16 @@ def test_persistent_memory_create_and_query(client_and_db):
     client, session_factory = client_and_db
     tenant_id = f"tenant-{uuid.uuid4()}"
     _insert_tenant(session_factory, tenant_id)
+=======
+    assert published.status_code in [200, 201], published.text
+    return workflow_id
+
+
+def test_persistent_memory_create_and_query(client, db_session):
+    tenant_id = f"tenant-{uuid.uuid4()}"
+    db_session.add(Tenant(id=tenant_id, name="Memory Tenant"))
+    db_session.commit()
+>>>>>>> origin/main
 
     persisted = client.post(
         "/api/v1/memory/persist",
@@ -104,12 +124,21 @@ def test_persistent_memory_create_and_query(client_and_db):
     assert queried.json()["total"] >= 1
 
 
+<<<<<<< HEAD
 def test_scoped_recall_priority_and_inactive_filter(client_and_db):
     client, session_factory = client_and_db
     tenant_id = f"tenant-{uuid.uuid4()}"
     workflow_id = f"wf-{uuid.uuid4()}"
     run_id = f"run-{uuid.uuid4()}"
     _insert_tenant(session_factory, tenant_id)
+=======
+def test_scoped_recall_priority_and_inactive_filter(client, db_session):
+    tenant_id = f"tenant-{uuid.uuid4()}"
+    workflow_id = f"wf-{uuid.uuid4()}"
+    run_id = f"run-{uuid.uuid4()}"
+    db_session.add(Tenant(id=tenant_id, name="Priority Tenant"))
+    db_session.commit()
+>>>>>>> origin/main
 
     for scope, scope_id in [
         ("organization", tenant_id),
@@ -154,10 +183,17 @@ def test_scoped_recall_priority_and_inactive_filter(client_and_db):
     assert all(item["is_active"] for item in resolved_active.json()["items"])
 
 
+<<<<<<< HEAD
 def test_workflow_memory_and_skills_runtime_context(client_and_db):
     client, session_factory = client_and_db
     tenant_id = f"tenant-{uuid.uuid4()}"
     _insert_tenant(session_factory, tenant_id)
+=======
+def test_workflow_memory_read_write_and_run_inspection(client, db_session):
+    tenant_id = f"tenant-{uuid.uuid4()}"
+    db_session.add(Tenant(id=tenant_id, name="Run Tenant"))
+    db_session.commit()
+>>>>>>> origin/main
 
     seed = client.post(
         "/api/v1/memory/persist",
@@ -172,6 +208,7 @@ def test_workflow_memory_and_skills_runtime_context(client_and_db):
     )
     assert seed.status_code == 201
 
+<<<<<<< HEAD
     skill = client.post(
         "/api/v1/skills",
         json={
@@ -219,3 +256,29 @@ def test_workflow_memory_and_skills_runtime_context(client_and_db):
     inspection = client.get(f"/api/v1/memory/runs/{run_id}")
     assert inspection.status_code == 200
     assert inspection.json()["memory_written_ids"] == payload["memory_written_ids"]
+=======
+    workflow_id = _create_workflow(client, tenant_id)
+
+    run1 = client.post(f"/api/v1/workflows/{workflow_id}/run")
+    assert run1.status_code == 200, run1.text
+    run1_id = run1.json()["run_id"]
+
+    detail1 = client.get(f"/api/v1/workflows/{workflow_id}/runs/{run1_id}")
+    assert detail1.status_code == 200
+    assert len(detail1.json()["memory_read_ids"]) >= 1
+
+    run2 = client.post(
+        f"/api/v1/workflows/{workflow_id}/run",
+        json={"persist_memory": True, "persist_scope": "workflow", "persist_memory_type": "summary"},
+    )
+    assert run2.status_code == 200, run2.text
+    run2_id = run2.json()["run_id"]
+
+    detail2 = client.get(f"/api/v1/workflows/{workflow_id}/runs/{run2_id}")
+    assert detail2.status_code == 200
+    assert len(detail2.json()["memory_written_ids"]) == 1
+
+    inspection = client.get(f"/api/v1/memory/runs/{run2_id}")
+    assert inspection.status_code == 200
+    assert inspection.json()["memory_written_ids"] == detail2.json()["memory_written_ids"]
+>>>>>>> origin/main
