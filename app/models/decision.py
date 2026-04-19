@@ -77,7 +77,7 @@ class Decision(Base):
     # Forward reference to recommended alternative
     recommended_alternative = relationship(
         "DecisionAlternative",
-        foreign_keys="decision.recommended_alternative_id",
+        foreign_keys="Decision.recommended_alternative_id",
         uselist=False
     )
 
