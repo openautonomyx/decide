@@ -94,7 +94,7 @@ class DecisionAlternative(Base):
     estimated_time_days = Column(Integer)
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="alternatives")
+    decision = relationship("Decision", back_populates="alternatives", foreign_keys=[decision_id])
     scores = relationship("DecisionScore", back_populates="alternative", cascade="all, delete-orphan")
 
 
@@ -111,7 +111,7 @@ class DecisionEvidence(Base):
     url_or_path = Column(String(500))
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="evidence")
+    decision = relationship("Decision", back_populates="evidence", foreign_keys=[decision_id])
 
 
 class DecisionCriterion(Base):
@@ -125,7 +125,7 @@ class DecisionCriterion(Base):
     scoring_method = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="criteria")
+    decision = relationship("Decision", back_populates="criteria", foreign_keys=[decision_id])
     scores = relationship("DecisionScore", back_populates="criterion", cascade="all, delete-orphan")
 
 
@@ -140,7 +140,7 @@ class DecisionScore(Base):
     rationale = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="scores")
+    decision = relationship("Decision", back_populates="scores", foreign_keys=[decision_id])
     alternative = relationship("DecisionAlternative", back_populates="scores")
     criterion = relationship("DecisionCriterion", back_populates="scores")
 
@@ -158,7 +158,7 @@ class DecisionRecommendation(Base):
     generated_by_id = Column(String(36))
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="recommendations")
+    decision = relationship("Decision", back_populates="recommendations", foreign_keys=[decision_id])
     recommended_alternative = relationship(
         "DecisionAlternative",
         foreign_keys="DecisionRecommendation.recommended_alternative_id"
@@ -178,7 +178,7 @@ class DecisionApprovalStep(Base):
     decided_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="approval_steps")
+    decision = relationship("Decision", back_populates="approval_steps", foreign_keys=[decision_id])
 
 
 class DecisionOutcomeReview(Base):
@@ -193,7 +193,7 @@ class DecisionOutcomeReview(Base):
     reviewed_by = Column(String(36))
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="outcome_reviews")
+    decision = relationship("Decision", back_populates="outcome_reviews", foreign_keys=[decision_id])
 
 
 class DecisionEvent(Base):
@@ -205,4 +205,4 @@ class DecisionEvent(Base):
     event_data = Column(Text)  # JSONB in schema
     created_at = Column(DateTime, server_default=func.now())
 
-    decision = relationship("Decision", back_populates="events")
+    decision = relationship("Decision", back_populates="events", foreign_keys=[decision_id])

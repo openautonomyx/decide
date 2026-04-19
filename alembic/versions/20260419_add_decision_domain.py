@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_decision_domain'
-down_revision = None  # This is the first migration in the repo
+down_revision = 'base_tables'
 branch_labels = None
 depends_on = None
 
