@@ -69,6 +69,13 @@ app.include_router(r_frameworks.router, prefix=settings.api_prefix)
 app.include_router(r_memory.router, prefix=settings.api_prefix)
 app.include_router(r_skill.router, prefix=settings.api_prefix)
 
+# Traceability and Billing
+from app.api import trace as r_trace
+from app.api import billing as r_billing
+
+app.include_router(r_trace.router, prefix=settings.api_prefix)
+app.include_router(r_billing.router, prefix=settings.api_prefix)
+
 
 # Demo static files
 from fastapi.staticfiles import StaticFiles
