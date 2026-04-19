@@ -227,6 +227,7 @@ async def roundtrip_export(workflow_id: str, db: Session = Depends(get_db)):
 
         langgraph_nodes.append({
             "id": node.node_id,
+            "legacy_id": node.id,
             "type": node.node_type,
             "data": config.get("original_data", {}),
             "metadata": {
