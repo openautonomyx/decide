@@ -13,6 +13,16 @@ cd decide
 ./deploy.sh
 ```
 
+## Google Cloud Deployment
+
+To deploy the API to Google Cloud Run (with Cloud SQL + Memorystore), use:
+
+```bash
+./deploy-gcp.sh
+```
+
+See `docs/google-cloud-deploy.md` for required environment variables and full setup steps.
+
 ## Access
 
 | Service | URL | Credentials |
