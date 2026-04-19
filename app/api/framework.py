@@ -94,8 +94,6 @@ async def import_langgraph_workflow(
     db.refresh(version)
 
     nodes_imported = 0
-    node_id_map = {}
-
     lf_flow = compile_result["langflow_flow"]
     for node in lf_flow.get("nodes", []):
         node_type = node.get("type", "unknown")
@@ -104,7 +102,6 @@ async def import_langgraph_workflow(
             continue
 
         node_db_id = str(uuid4())
-        node_id_map[node.get("id", "")] = node_db_id
 
         node_data = node.get("data", {})
         metadata = node_data.get("metadata", {})
@@ -135,16 +132,12 @@ async def import_langgraph_workflow(
     for edge in lf_flow.get("edges", []):
         source_original = edge.get("source", "")
         target_original = edge.get("target", "")
-
-        source_id = node_id_map.get(source_original)
-        target_id = node_id_map.get(target_original)
-
-        if source_id and target_id:
+        if source_original and target_original:
             wf_edge = WorkflowEdge(
                 id=str(uuid4()),
                 version_id=version_id,
-                source_node_id=source_id,
-                target_node_id=target_id,
+                source_node_id=source_original,
+                target_node_id=target_original,
                 edge_type="direct",
             )
             db.add(wf_edge)

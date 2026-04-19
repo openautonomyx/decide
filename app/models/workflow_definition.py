@@ -107,6 +107,10 @@ class WorkflowRun(Base):
     started_at = Column(DateTime, server_default=func.now())
     completed_at = Column(DateTime)
     error_message = Column(Text)
+    memory_context_json = Column(Text)
+    memory_read_ids_json = Column(Text)
+    memory_written_ids_json = Column(Text)
+    memory_write_mode = Column(String(50))
 
     workflow = relationship("WorkflowDefinition", backref="runs")
     steps = relationship("WorkflowRunStep", back_populates="run", cascade="all, delete-orphan")
