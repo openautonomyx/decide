@@ -32,6 +32,18 @@ from app.schemas.decision import (
 router = APIRouter(prefix="/decisions", tags=["decisions"])
 
 
+def _create_event(db: Session, decision_id: str, event_type: str, event_data: str = None):
+    """Helper to create decision events."""
+    event = DecisionEventModel(
+        id=str(uuid4()),
+        decision_id=decision_id,
+        event_type=event_type,
+        event_data=event_data,
+    )
+    db.add(event)
+    return event
+
+
 # --- Decision CRUD ---
 
 
@@ -65,13 +77,7 @@ def create_decision(decision_in: DecisionCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(d)
     # Create event
-    event = DecisionEventModel(
-        id=str(uuid4()),
-        decision_id=d.id,
-        event_type="created",
-        event_data='{"action": "created"}'
-    )
-    db.add(event)
+    _create_event(db, d.id, "created", '{"action": "created"}')
     db.commit()
     return d
 
@@ -81,10 +87,15 @@ def update_decision(decision_id: str, decision_in: DecisionUpdate, db: Session =
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
+    old_status = d.status
     for f, v in decision_in.model_dump(exclude_unset=True).items():
         setattr(d, f, v)
     db.commit()
     db.refresh(d)
+    # Event on status change
+    if d.status != old_status:
+        _create_event(db, d.id, "status_changed", f'{{"old": "{old_status}", "new": "{d.status}"}}')
+        db.commit()
     return d
 
 
@@ -103,7 +114,6 @@ def delete_decision(decision_id: str, db: Session = Depends(get_db)):
 
 @router.get("/{decision_id}/alternatives", response_model=DecisionAlternativeList)
 def list_alternatives(decision_id: str, db: Session = Depends(get_db)):
-    # Verify decision exists
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
@@ -116,7 +126,9 @@ def create_alternative(decision_id: str, alt_in: DecisionAlternativeCreate, db: 
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    alt = DecisionAlternativeModel(id=str(uuid4()), **alt_in.model_dump())
+    # Use path decision_id, ignore body decision_id
+    alt_data = alt_in.model_dump(exclude={"decision_id"})
+    alt = DecisionAlternativeModel(id=str(uuid4()), decision_id=decision_id, **alt_data)
     db.add(alt)
     db.commit()
     db.refresh(alt)
@@ -152,7 +164,9 @@ def create_evidence(decision_id: str, ev_in: DecisionEvidenceCreate, db: Session
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    ev = DecisionEvidenceModel(id=str(uuid4()), **ev_in.model_dump())
+    # Use path decision_id
+    ev_data = ev_in.model_dump(exclude={"decision_id"})
+    ev = DecisionEvidenceModel(id=str(uuid4()), decision_id=decision_id, **ev_data)
     db.add(ev)
     db.commit()
     db.refresh(ev)
@@ -176,7 +190,9 @@ def create_criterion(decision_id: str, crit_in: DecisionCriterionCreate, db: Ses
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    crit = DecisionCriterionModel(id=str(uuid4()), **crit_in.model_dump())
+    # Use path decision_id
+    crit_data = crit_in.model_dump(exclude={"decision_id"})
+    crit = DecisionCriterionModel(id=str(uuid4()), decision_id=decision_id, **crit_data)
     db.add(crit)
     db.commit()
     db.refresh(crit)
@@ -200,7 +216,26 @@ def create_score(decision_id: str, score_in: DecisionScoreCreate, db: Session = 
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    score = DecisionScoreModel(id=str(uuid4()), **score_in.model_dump())
+    
+    # Validate alternative belongs to this decision
+    alt = db.query(DecisionAlternativeModel).filter(
+        DecisionAlternativeModel.id == score_in.alternative_id,
+        DecisionAlternativeModel.decision_id == decision_id
+    ).first()
+    if not alt:
+        raise HTTPException(400, "Alternative not found for this decision")
+    
+    # Validate criterion belongs to this decision
+    crit = db.query(DecisionCriterionModel).filter(
+        DecisionCriterionModel.id == score_in.criterion_id,
+        DecisionCriterionModel.decision_id == decision_id
+    ).first()
+    if not crit:
+        raise HTTPException(400, "Criterion not found for this decision")
+    
+    # Use path decision_id
+    score_data = score_in.model_dump(exclude={"decision_id"})
+    score = DecisionScoreModel(id=str(uuid4()), decision_id=decision_id, **score_data)
     db.add(score)
     db.commit()
     db.refresh(score)
@@ -226,13 +261,31 @@ def create_recommendation(decision_id: str, rec_in: DecisionRecommendationCreate
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    rec = DecisionRecommendationModel(id=str(uuid4()), **rec_in.model_dump())
+    
+    # Validate recommended_alternative if provided
+    if rec_in.recommended_alternative_id:
+        alt = db.query(DecisionAlternativeModel).filter(
+            DecisionAlternativeModel.id == rec_in.recommended_alternative_id,
+            DecisionAlternativeModel.decision_id == decision_id
+        ).first()
+        if not alt:
+            raise HTTPException(400, "Recommended alternative not found for this decision")
+    
+    # Use path decision_id
+    rec_data = rec_in.model_dump(exclude={"decision_id"})
+    rec = DecisionRecommendationModel(id=str(uuid4()), decision_id=decision_id, **rec_data)
     db.add(rec)
     db.commit()
     db.refresh(rec)
+    
+    # Create event
+    _create_event(db, decision_id, "recommendation_created", f'{{"recommendation_id": "{rec.id}"}}')
+    db.commit()
+    
     # Update decision status
     d.status = "recommended"
     db.commit()
+    
     return rec
 
 
@@ -253,7 +306,9 @@ def create_approval_step(decision_id: str, step_in: DecisionApprovalStepCreate, 
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    step = DecisionApprovalStepModel(id=str(uuid4()), **step_in.model_dump())
+    # Use path decision_id
+    step_data = step_in.model_dump(exclude={"decision_id"})
+    step = DecisionApprovalStepModel(id=str(uuid4()), decision_id=decision_id, **step_data)
     db.add(step)
     db.commit()
     db.refresh(step)
@@ -277,7 +332,9 @@ def create_outcome_review(decision_id: str, review_in: DecisionOutcomeReviewCrea
     d = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not d:
         raise HTTPException(404, "Decision not found")
-    review = DecisionOutcomeReviewModel(id=str(uuid4()), **review_in.model_dump())
+    # Use path decision_id
+    review_data = review_in.model_dump(exclude={"decision_id"})
+    review = DecisionOutcomeReviewModel(id=str(uuid4()), decision_id=decision_id, **review_data)
     db.add(review)
     db.commit()
     db.refresh(review)
