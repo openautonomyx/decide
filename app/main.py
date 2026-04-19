@@ -71,3 +71,8 @@ app.include_router(r_skill.router, prefix=settings.api_prefix)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# Framework compiler (LangGraph → LangFlow)
+from app.api import framework as r_framework
+
+app.include_router(r_framework.router, prefix=settings.api_prefix)
