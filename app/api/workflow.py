@@ -6,6 +6,7 @@ import json
 from uuid import uuid4
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Body
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -192,6 +193,7 @@ class RunDetailResponse(BaseModel):
 
 class RunRequest(BaseModel):
     product_id: str | None = None
+    agent_role: str | None = None
     session_id: str | None = None
     persist_memory: bool = False
     persist_scope: str = "run"  # run or workflow
@@ -231,23 +233,38 @@ def _resolve_skills_for_context(
     db: Session,
     tenant_id: str,
     workflow_id: str | None = None,
+    product_id: str | None = None,
+    agent_role: str | None = None,
 ) -> list[dict]:
     """Resolve active skills and attach current version content where available."""
     q = db.query(SkillDefinition).filter(
         SkillDefinition.tenant_id == tenant_id,
         SkillDefinition.status == "active",
     )
-    q = q.filter(
-        (SkillDefinition.scope_type == "organization")
-        | (
-            (SkillDefinition.scope_type == "workflow")
-            & (SkillDefinition.scope_id == workflow_id)
+    scope_filters = [SkillDefinition.scope_type == "organization"]
+    if product_id:
+        scope_filters.append(
+            (SkillDefinition.scope_type == "product") & (SkillDefinition.scope_id == product_id)
         )
-    )
+    if workflow_id:
+        scope_filters.append(
+            (SkillDefinition.scope_type == "workflow") & (SkillDefinition.scope_id == workflow_id)
+        )
+    if agent_role:
+        scope_filters.append(
+            (SkillDefinition.scope_type == "agent_role") & (SkillDefinition.scope_id == agent_role)
+        )
+    q = q.filter(or_(*scope_filters))
     skills = q.order_by(SkillDefinition.created_at.desc()).all()
 
+    priority = {"organization": 1, "product": 2, "workflow": 3, "agent_role": 4}
+    skills = sorted(skills, key=lambda s: (priority.get(s.scope_type or "", 99), s.created_at))
     out: list[dict] = []
+    seen_slugs: set[str] = set()
     for skill in skills:
+        if skill.slug in seen_slugs:
+            continue
+        seen_slugs.add(skill.slug)
         binding = None
         if workflow_id:
             binding = db.query(SkillBinding).filter(
@@ -803,6 +820,8 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         db,
         tenant_id=workflow.tenant_id if workflow else "",
         workflow_id=workflow_id,
+        product_id=None,
+        agent_role=None,
     ) if workflow else []
     
     return RunDetailResponse(
