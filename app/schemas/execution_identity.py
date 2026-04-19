@@ -5,10 +5,11 @@ from datetime import datetime
 
 
 class ExecutionIdentityBindingBase(BaseModel):
+    provider_name: str = "autonomyx_agent_identity"
     workflow_id: Optional[str] = None
     workflow_version_id: Optional[str] = None
     template_id: Optional[str] = None
-    execution_identity_id: str
+    external_identity_id: str
     tenant_id: str
     agent_name: Optional[str] = None
     agent_type: Optional[str] = None
@@ -21,7 +22,6 @@ class ExecutionIdentityBindingBase(BaseModel):
     tpm_limit: Optional[int] = None
     expires_at: Optional[datetime] = None
     status: str = "active"
-    source_system: str = "autonomyx-agent-identity"
 
 
 class ExecutionIdentityBindingCreate(ExecutionIdentityBindingBase):
@@ -51,10 +51,11 @@ class ExecutionIdentityBindingDetail(ExecutionIdentityBindingResponse):
 
 
 class PolicyEvaluationResultBase(BaseModel):
+    provider_name: Optional[str] = None
     workflow_id: Optional[str] = None
     workflow_version_id: Optional[str] = None
     run_id: Optional[str] = None
-    execution_identity_id: Optional[str] = None
+    external_identity_id: Optional[str] = None
     evaluation_type: str
     is_allowed: bool
     reasons_json: Optional[str] = None

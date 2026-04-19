@@ -20,11 +20,105 @@ from app.models.workflow_definition import (
     WorkflowRun,
     WorkflowRunStep,
 )
+from app.models.execution_identity import ExecutionIdentityBinding, PolicyEvaluationResult
+from app.integrations.identity.factory import get_adapter
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
 # Supported node types for MVP
 SUPPORTED_NODE_TYPES = {"start", "llm", "tool", "condition", "human_approval", "end"}
+
+
+def _evaluate_identity_for_workflow(
+    db: Session,
+    workflow_id: str,
+    workflow_tenant_id: str,
+    evaluation_type: str,
+) -> tuple[bool, list, dict]:
+    """
+    Evaluate identity constraints for a workflow.
+    Returns (is_allowed, reasons, metadata).
+    """
+    # Find binding for this workflow
+    binding = db.query(ExecutionIdentityBinding).filter(
+        ExecutionIdentityBinding.workflow_id == workflow_id
+    ).first()
+    
+    if not binding:
+        # No binding = no identity constraints to check
+        return True, [], {"has_binding": False}
+    
+    # Get adapter for provider
+    adapter = get_adapter(binding.provider_name)
+    if not adapter:
+        return False, [f"Unknown provider: {binding.provider_name}"], {"provider": binding.provider_name}
+    
+    # Fetch latest identity data
+    normalized = None
+    try:
+        import asyncio
+        normalized = asyncio.get_event_loop().run_until_complete(
+            adapter.sync_identity(binding.external_identity_id)
+        )
+    except Exception:
+        # Fall back to cached binding data
+        pass
+    
+    if not normalized:
+        # Try cached binding
+        from app.integrations.identity.base import NormalizedIdentity
+        import json
+        normalized = NormalizedIdentity(
+            external_identity_id=binding.external_identity_id,
+            provider=binding.provider_name,
+            tenant_id=binding.tenant_id,
+            agent_name=binding.agent_name,
+            agent_type=binding.agent_type,
+            owner_ids=json.loads(binding.owner_ids_json) if binding.owner_ids_json else [],
+            allowed_models=json.loads(binding.allowed_models_json) if binding.allowed_models_json else [],
+            budget_limit=binding.budget_limit,
+            tpm_limit=binding.tpm_limit,
+            expires_at=binding.expires_at,
+            status=binding.status or "unknown",
+        )
+    
+    # Build workflow context
+    nodes = db.query(WorkflowNode).join(WorkflowVersion).filter(
+        WorkflowVersion.workflow_id == workflow_id,
+        WorkflowVersion.is_current == True
+    ).all()
+    
+    models_used = []
+    for node in nodes:
+        if node.node_type == "llm":
+            cfg = json.loads(node.config) if node.config else {}
+            if cfg.get("model"):
+                models_used.append(cfg["model"])
+    
+    workflow_context = {
+        "tenant_id": workflow_tenant_id,
+        "workflow_id": workflow_id,
+        "models_used": models_used,
+    }
+    
+    # Evaluate constraints
+    result = adapter.evaluate_constraints(normalized, workflow_context)
+    
+    # Store policy evaluation result
+    policy = PolicyEvaluationResult(
+        id=str(uuid4()),
+        provider_name=binding.provider_name,
+        workflow_id=workflow_id,
+        external_identity_id=binding.external_identity_id,
+        evaluation_type=evaluation_type,
+        is_allowed=result.is_allowed,
+        reasons_json=json.dumps(result.reasons),
+        metadata_json=json.dumps(result.metadata),
+    )
+    db.add(policy)
+    db.commit()
+    
+    return result.is_allowed, result.reasons, result.metadata
 
 # Schemas
 
@@ -50,12 +144,19 @@ class ValidationIssue(BaseModel):
     message: str
 
 
+class IdentityCheckResult(BaseModel):
+    is_allowed: bool
+    reasons: list[str]
+    metadata: dict
+
+
 class ValidationResponse(BaseModel):
     is_valid: bool
     can_publish: bool
     issues: list[ValidationIssue]
     unsupported_nodes: list[str]
     missing_configs: list[str]
+    identity_check: IdentityCheckResult | None = None
 
 
 class PublishResponse(BaseModel):
@@ -213,6 +314,7 @@ def validate_workflow(workflow_id: str, db: Session = Depends(get_db)):
     """
     Validate a workflow for publish readiness.
     Checks supported node types and required config.
+    Optionally evaluates identity constraints.
     """
     workflow = db.query(WorkflowDefinition).filter(
         WorkflowDefinition.id == workflow_id
@@ -241,7 +343,7 @@ def validate_workflow(workflow_id: str, db: Session = Depends(get_db)):
         # Check node type
         if node.node_type not in SUPPORTED_NODE_TYPES:
             issues.append(ValidationIssue(
-                type="unssupported_node",
+                type="unsupported_node",
                 node_id=node.node_id,
                 message=f"Node type '{node.node_type}' is not supported",
             ))
@@ -288,6 +390,11 @@ def validate_workflow(workflow_id: str, db: Session = Depends(get_db)):
     is_valid = len(issues) == 0
     can_publish = is_valid
     
+    # Evaluate identity constraints (optional - record results but don't block validation)
+    identity_allowed, identity_reasons, identity_metadata = _evaluate_identity_for_workflow(
+        db, workflow_id, workflow.tenant_id, "validate"
+    )
+    
     # Store validation result
     validation = WorkflowValidationResult(
         id=str(uuid4()),
@@ -300,12 +407,18 @@ def validate_workflow(workflow_id: str, db: Session = Depends(get_db)):
     db.add(validation)
     db.commit()
     
+    # Add identity info to response
     return ValidationResponse(
         is_valid=is_valid,
         can_publish=can_publish,
         issues=issues,
         unsupported_nodes=list(set(unsupported_nodes)),
         missing_configs=missing_configs,
+        identity_check=IdentityCheckResult(
+            is_allowed=identity_allowed,
+            reasons=identity_reasons,
+            metadata=identity_metadata,
+        ) if identity_metadata.get("has_binding", True) else None,
     )
 
 
@@ -314,6 +427,7 @@ def publish_workflow(workflow_id: str, db: Session = Depends(get_db)):
     """
     Publish a workflow.
     Creates a publish artifact and marks version as published.
+    Blocks publish if identity-backed policy fails.
     """
     workflow = db.query(WorkflowDefinition).filter(
         WorkflowDefinition.id == workflow_id
@@ -328,6 +442,14 @@ def publish_workflow(workflow_id: str, db: Session = Depends(get_db)):
     
     if validation and not validation.can_publish:
         raise HTTPException(400, "Workflow cannot be published - fix validation issues first")
+    
+    # Evaluate identity constraints - block publish if fails
+    identity_allowed, identity_reasons, _ = _evaluate_identity_for_workflow(
+        db, workflow_id, workflow.tenant_id, "publish"
+    )
+    
+    if not identity_allowed:
+        raise HTTPException(403, f"Publish blocked by identity policy: {'; '.join(identity_reasons)}")
     
     # Get current version
     version = db.query(WorkflowVersion).filter(
@@ -395,6 +517,7 @@ def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
     """
     Execute a workflow.
     Simple interpreted execution for supported node types.
+    Blocks run if identity-backed policy fails.
     """
     workflow = db.query(WorkflowDefinition).filter(
         WorkflowDefinition.id == workflow_id
@@ -404,6 +527,14 @@ def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
     
     if not workflow.is_published:
         raise HTTPException(400, "Workflow must be published before running")
+    
+    # Evaluate identity constraints - block run if fails
+    identity_allowed, identity_reasons, _ = _evaluate_identity_for_workflow(
+        db, workflow_id, workflow.tenant_id, "run"
+    )
+    
+    if not identity_allowed:
+        raise HTTPException(403, f"Run blocked by identity policy: {'; '.join(identity_reasons)}")
     
     # Get current version
     version = db.query(WorkflowVersion).filter(
