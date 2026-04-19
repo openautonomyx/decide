@@ -171,6 +171,184 @@ def _evaluate_identity_for_workflow(
     
     return result.is_allowed, result.reasons, result.metadata
 
+# Skill helper for workflow integration
+from app.models.skill import SkillDefinition
+
+
+# Explicit priority order for scope resolution (highest to lowest priority)
+# Later scopes override earlier ones (deduped by skill ID)
+SCOPE_PRIORITY = [
+    "component",    # Most specific: specific component instance
+    "template",     # Template-level skills
+    "workflow",     # Workflow-specific skills
+    "product",      # Product-level skills
+    "agent_role",   # Role-based skills
+    "organization", # Tenant-level fallback
+]
+
+
+def _get_version_for_skill(db: Session, skill_id: str) -> dict | None:
+    """
+    Get the current/latest version for a skill.
+    Priority: is_current=True > highest version_number.
+    Returns a dict with version info, or None if no version exists.
+    """
+    from app.models.skill import SkillVersion
+    
+    # First try explicit current flag
+    version = db.query(SkillVersion).filter(
+        SkillVersion.skill_id == skill_id,
+        SkillVersion.is_current == True
+    ).first()
+    
+    # Fall back to latest by version number
+    if not version:
+        version = db.query(SkillVersion).filter(
+            SkillVersion.skill_id == skill_id
+        ).order_by(SkillVersion.version_number.desc()).first()
+    
+    if not version:
+        return None
+    
+    return {
+        "id": version.id,
+        "version_number": version.version_number,
+        "content": json.loads(version.content_json) if version.content_json else {},
+        "input_schema": json.loads(version.input_schema_json) if version.input_schema_json else None,
+        "output_schema": json.loads(version.output_schema_json) if version.output_schema_json else None,
+        "tool_requirements": json.loads(version.tool_requirements_json) if version.tool_requirements_json else None,
+    }
+
+
+def resolve_skills_for_workflow(
+    db: Session,
+    tenant_id: str,
+    workflow_id: str | None = None,
+    template_id: str | None = None,
+    component_id: str | None = None,
+    agent_role: str | None = None,
+    product: str | None = None,
+) -> list[dict]:
+    """
+    Resolve skills for workflow execution context.
+    
+    Resolution order:
+    1. Build scope list from provided context (product, workflow, template, component, agent_role)
+    2. Always include organization scope as fallback
+    3. Query skills for each scope, filter by tenant + active status
+    4. Flatten results in priority order (SCOPE_PRIORITY)
+    5. Deduplicate by skill ID (higher-priority scope wins)
+    6. Attach current version content to each skill
+    
+    Args:
+        db: Database session
+        tenant_id: Tenant ID for the workflow
+        workflow_id: Optional workflow ID
+        template_id: Optional template ID
+        component_id: Optional component ID  
+        agent_role: Optional agent role
+        product: Optional product ID
+    
+    Returns:
+        List of skill dicts with resolved content, ready for node execution.
+        
+    Example usage in node execution:
+        # Access skills from execution context
+        skills = exec_context.get("skills", [])
+        
+        # Filter by skill type for specific node
+        prompt_skills = [s for s in skills if s["skill_type"] == "prompt_skill"]
+        tool_sequences = [s for s in skills if s["skill_type"] == "tool_sequence"]
+        
+        # Use skill content
+        for skill in prompt_skills:
+            prompt_template = skill["content"].get("template")
+    """
+    from app.models.skill import SkillVersion
+    
+    # Build scope list from context (order doesn't matter - deduped later)
+    scope_context = []
+    if product:
+        scope_context.append(("product", product))
+    if workflow_id:
+        scope_context.append(("workflow", workflow_id))
+    if agent_role:
+        scope_context.append(("agent_role", agent_role))
+    if template_id:
+        scope_context.append(("template", template_id))
+    if component_id:
+        scope_context.append(("component", component_id))
+    
+    # Always include organization as base scope
+    scope_context.append(("organization", tenant_id))
+    
+    # Query skills for each scope
+    skills_by_scope = {}
+    for scope_type, scope_id in scope_context:
+        query = db.query(SkillDefinition).filter(
+            SkillDefinition.tenant_id == tenant_id,
+            SkillDefinition.status == "active",
+        )
+        
+        # Organization/global scopes use scope_type only
+        if scope_type in ("organization", "global"):
+            query = query.filter(SkillDefinition.scope_type == scope_type)
+        else:
+            query = query.filter(
+                SkillDefinition.scope_type == scope_type,
+                SkillDefinition.scope_id == scope_id,
+            )
+        
+        skills = query.all()
+        if skills:
+            skills_by_scope[scope_type] = skills
+    
+    # Flatten in priority order, deduplicating by skill ID
+    resolved = []
+    seen_ids: set[str] = set()
+    
+    for scope in SCOPE_PRIORITY:
+        if scope not in skills_by_scope:
+            continue
+            
+        for skill in skills_by_scope[scope]:
+            if skill.id in seen_ids:
+                continue
+            seen_ids.add(skill.id)
+            
+            # Get version content
+            version_info = _get_version_for_skill(db, skill.id)
+            
+            # Build skill payload for node execution
+            skill_dict = {
+                "id": skill.id,
+                "name": skill.name,
+                "slug": skill.slug,
+                "description": skill.description,
+                "skill_type": skill.skill_type,
+                "scope_type": skill.scope_type,
+                "scope_id": skill.scope_id,
+                "version": version_info,
+            }
+            resolved.append(skill_dict)
+    
+    return resolved
+
+
+# Execution context helper for nodes
+def get_skill_by_type(skills: list[dict], skill_type: str) -> list[dict]:
+    """Helper to filter skills by type for node execution."""
+    return [s for s in skills if s.get("skill_type") == skill_type]
+
+
+def get_skill_by_slug(skills: list[dict], slug: str) -> dict | None:
+    """Helper to find a specific skill by slug."""
+    for s in skills:
+        if s.get("slug") == slug:
+            return s
+    return None
+
+
 # Schemas
 
 
@@ -223,6 +401,7 @@ class RunResponse(BaseModel):
     workflow_id: str
     status: str
     final_output: str | None = None
+    resolved_skills: list[dict] | None = None
 
 
 class RunDetailResponse(BaseModel):
@@ -231,6 +410,7 @@ class RunDetailResponse(BaseModel):
     version_id: str
     status: str
     final_output: str | None = None
+    resolved_skills: list[dict] | None = None
     started_at: str
     completed_at: str | None = None
     error_message: str | None = None
@@ -675,6 +855,16 @@ def run_workflow(
     if not identity_allowed:
         raise HTTPException(403, f"Run blocked by identity policy: {'; '.join(identity_reasons)}")
     
+    # Resolve skills for this workflow execution context
+    resolved_skills = resolve_skills_for_workflow(
+        db,
+        tenant_id=workflow.tenant_id,
+        workflow_id=workflow_id,
+    )
+    
+    # Serialize skills for storage
+    resolved_skills_json = json.dumps(resolved_skills)
+    
     # Get current version
     version = db.query(WorkflowVersion).filter(
         WorkflowVersion.workflow_id == workflow_id,
@@ -687,6 +877,7 @@ def run_workflow(
         workflow_id=workflow_id,
         version_id=version.id,
         status="running",
+        resolved_skills_json=resolved_skills_json,
     )
     db.add(run)
     db.commit()
@@ -724,6 +915,15 @@ def run_workflow(
     run.memory_context_json = json.dumps(memory_context)
     run.memory_read_ids_json = json.dumps(memory_read_ids)
     db.commit()
+    
+    # Build execution context with resolved skills
+    exec_context = {
+        "workflow_id": workflow_id,
+        "version_id": version.id,
+        "run_id": run.id,
+        "tenant_id": workflow.tenant_id,
+        "skills": resolved_skills,  # Resolved skills available for node execution
+    }
     
     # Get nodes and edges
     nodes = db.query(WorkflowNode).filter(
@@ -843,6 +1043,7 @@ def run_workflow(
         workflow_id=workflow_id,
         status=run.status,
         final_output=run.final_output,
+        resolved_skills=resolved_skills,
     )
 
 
@@ -911,8 +1112,6 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         product_id=None,
         agent_role=None,
     ) if workflow else []
-
-
     
     return RunDetailResponse(
         id=run.id,
@@ -920,6 +1119,7 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         version_id=run.version_id,
         status=run.status,
         final_output=run.final_output,
+        resolved_skills=resolved_skills,
         started_at=run.started_at.isoformat() if run.started_at else None,
         completed_at=run.completed_at.isoformat() if run.completed_at else None,
         error_message=run.error_message,

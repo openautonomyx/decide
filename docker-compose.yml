@@ -45,6 +45,24 @@ services:
       - ./app:/app/app
       - ./alembic:/app/alembic
 
+  # LangFlow for Visual Agent Orchestration
+  langflow:
+    image: langflowai/langflow:1.9.0
+    environment:
+      LANGFLOW_PORT: 7860
+      LANGFLOW_SUPERUSER: admin
+      LANGFLOW_SUPERUSER_PASSWORD: admin123
+      LANGFLOW_DATABASE_URL: postgresql://autonomyx:autonomyx@postgres:5432/langflow
+      LANGFLOW_SECRET_KEY: dev-langflow-secret-change-me
+      LANGFLOW_CUSTOM_COMPONENTS_DIR: /home/langflow/user_config
+    ports:
+      - "17860:7860"
+    volumes:
+      - ./langflow_components:/home/langflow/user_config/custom_components/decide:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   claude-coder:
     build: ./services/claude-coder
     env_file:

@@ -104,6 +104,7 @@ class WorkflowRun(Base):
     version_id = Column(String(36), ForeignKey("workflow_version.id"), nullable=False)
     status = Column(String(50), default="pending")  # pending, running, completed, failed
     final_output = Column(Text)
+    resolved_skills_json = Column(Text)  # JSON array of resolved skills
     started_at = Column(DateTime, server_default=func.now())
     completed_at = Column(DateTime)
     error_message = Column(Text)
