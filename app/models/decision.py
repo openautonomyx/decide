@@ -1,5 +1,5 @@
 # Decision Domain SQLAlchemy Models
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Date, ForeignKey, Text, Numeric, func
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Numeric, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -20,7 +20,7 @@ class Decision(Base):
     owner_id = Column(String(36))
     risk_level = Column(String(50))
     decision_scope = Column(String(100))
-    recommended_alternative_id = Column(String(36), ForeignKey("decision_alternative.id"))
+    recommended_alternative_id = Column(String(36), ForeignKey("decision_alternative.id", name="fk_decision_recommended_alt"))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -29,6 +29,7 @@ class Decision(Base):
     alternatives = relationship("DecisionAlternative", back_populates="decision", cascade="all, delete-orphan")
     evidence = relationship("DecisionEvidence", back_populates="decision", cascade="all, delete-orphan")
     criteria = relationship("DecisionCriterion", back_populates="decision", cascade="all, delete-orphan")
+    scores = relationship("DecisionScore", back_populates="decision", cascade="all, delete-orphan")
     recommendations = relationship("DecisionRecommendation", back_populates="decision", cascade="all, delete-orphan")
     approval_steps = relationship("DecisionApprovalStep", back_populates="decision", cascade="all, delete-orphan")
     outcome_reviews = relationship("DecisionOutcomeReview", back_populates="decision", cascade="all, delete-orphan")
@@ -103,7 +104,7 @@ class DecisionRecommendation(Base):
 
     id = Column(String(36), primary_key=True)
     decision_id = Column(String(36), ForeignKey("decision.id"), nullable=False)
-    recommended_alternative_id = Column(String(36), ForeignKey("decision_alternative.id"))
+    recommended_alternative_id = Column(String(36), ForeignKey("decision_alternative.id", name="fk_recommendation_alt"))
     summary = Column(Text)
     rationale = Column(Text)
     tradeoffs = Column(Text)
