@@ -10,14 +10,20 @@ Curated entry point to the Autonomyx Decide platform docs. All content is alread
 ## Architecture
 
 - **[Design Summary v1](../architecture/design-summary-v1.md)** — One-page overview of the design decisions.
+- **[AutonomyX Platform Architecture](../architecture/autonomyx-platform-architecture.md)** — Cross-service architecture for Decide, Insights, Profile, model gateway, and MCP fleet.
 - **[Entity Catalog v1](../architecture/entity-catalog.md)** — All entities by domain (organization, agent, collaboration, workflow, control plane, master data).
 - **[ERD v1 (Mermaid)](../architecture/erd-v1.mmd)** — Visual entity relationships.
 - **[Runtime Architecture v2](../architecture/runtime-architecture-v2.md)** — LangGraph = orchestrator; OpenAI Agents SDK = channel; 5 worker runtimes (Claude Agent SDK, Deep Agents, CrewAI, LangChain, OpenAI Agents).
 - **[Memory & Storage Decision](../architecture/memory-storage-decision.md)** — Redis (working/episodic hot cache), SingleStore (vector/semantic), Postgres (transactional).
+- **[Insights Pipeline Design](../architecture/insights-pipeline-design.md)** — Ingestion-to-briefing pipeline for ranked, evidence-backed recommendations.
 - **[Control Plane Model](../architecture/control-plane-model.md)** — Execution requests, approvals, overrides, audit.
 - **[Workflow Model](../architecture/workflow-model.md)** — Tasks, milestones, deadlines, reminders, escalations.
 - **[Collaboration Model](../architecture/collaboration-model.md)** — Products, projects, groups, channels.
 - **[Cortex Implementation](../architecture/cortex-implementation.md)** — Cross-thread summarization.
+
+## Strategy
+
+- **[Insights v1 Audience Beachhead](../strategy/insights-v1-audience-beachhead.md)** — Initial market wedge: fractional operators and agency owners running multiple workstreams.
 
 ## Orchestrator (Phase 0 → 3)
 
@@ -52,6 +58,7 @@ Curated entry point to the Autonomyx Decide platform docs. All content is alread
 
 - **[Agent Profile Schema](../architecture/agent-profile-schema.md)** — Agent identity, governance, memory, skills, goals.
 - **[Employee Schema](../architecture/employee-schema.md)** — Employee identity, employment, education, certifications.
+- **[AutonomyX Profile Service Data Model](../data-model/autonomyx-profile-service-data-model.md)** — Canonical identity, account, relationship, evidence, and enrichment model for Profile.
 
 ## Operations
 
