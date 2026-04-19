@@ -45,6 +45,7 @@ from app.api import context as r_context
 from app.api import decision as r_decision
 from app.api import workflow as r_workflow_definition
 from app.api import execution_identity as r_execution_identity
+from app.api import frameworks as r_frameworks
 
 # Memory and Skills platform (replaces old skill router)
 from app.api import memory as r_memory
@@ -62,6 +63,7 @@ app.include_router(r_context.router, prefix=settings.api_prefix)
 app.include_router(r_decision.router, prefix=settings.api_prefix)
 app.include_router(r_workflow_definition.router, prefix=settings.api_prefix)
 app.include_router(r_execution_identity.router, prefix=settings.api_prefix)
+app.include_router(r_frameworks.router, prefix=settings.api_prefix)
 
 # Memory and Skills platform
 app.include_router(r_memory.router, prefix=settings.api_prefix)
