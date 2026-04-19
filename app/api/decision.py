@@ -492,3 +492,185 @@ def promote_decision_to_execution(decision_id: str, db: Session = Depends(get_db
         "decision_record_id": decision_record.id,
         "status": "promoted",
     }
+
+
+# --- Decision Brief ---
+
+
+@router.get("/{decision_id}/brief")
+def get_decision_brief(decision_id: str, db: Session = Depends(get_db)):
+    """
+    Get a structured decision brief assembled from stored decision data.
+    """
+    # 1. Validate decision exists
+    decision = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
+    if not decision:
+        raise HTTPException(404, "Decision not found")
+    
+    # 2. Decision summary
+    brief = {
+        "decision_id": decision.id,
+        "title": decision.title,
+        "description": decision.description,
+        "category": decision.category,
+        "status": decision.status,
+        "risk_level": decision.risk_level,
+        "scope": decision.decision_scope,
+        "created_at": decision.created_at.isoformat() if decision.created_at else None,
+        "updated_at": decision.updated_at.isoformat() if decision.updated_at else None,
+        "sponsor": {
+            "type": decision.sponsor_type,
+            "id": decision.sponsor_id,
+        } if decision.sponsor_type else None,
+        "owner": {
+            "type": decision.owner_type,
+            "id": decision.owner_id,
+        } if decision.owner_type else None,
+    }
+    
+    # 3. Alternatives
+    alternatives = db.query(DecisionAlternativeModel).filter(
+        DecisionAlternativeModel.decision_id == decision_id
+    ).all()
+    brief["alternatives"] = [
+        {
+            "id": alt.id,
+            "title": alt.title,
+            "description": alt.description,
+            "status": alt.status,
+            "estimated_cost": str(alt.estimated_cost) if alt.estimated_cost else None,
+            "estimated_time_days": alt.estimated_time_days,
+        }
+        for alt in alternatives
+    ]
+    
+    # 4. Criteria and weights
+    criteria = db.query(DecisionCriterionModel).filter(
+        DecisionCriterionModel.decision_id == decision_id
+    ).all()
+    brief["criteria"] = [
+        {
+            "id": c.id,
+            "name": c.name,
+            "description": c.description,
+            "weight": float(c.weight) if c.weight else 1.0,
+            "scoring_method": c.scoring_method,
+        }
+        for c in criteria
+    ]
+    
+    # 5. Scoring summary
+    scores = db.query(DecisionScoreModel).filter(
+        DecisionScoreModel.decision_id == decision_id
+    ).all()
+    
+    # Group scores by alternative
+    alt_scores = {}
+    for score in scores:
+        alt_id = score.alternative_id
+        if alt_id not in alt_scores:
+            alt_scores[alt_id] = []
+        alt_scores[alt_id].append({
+            "criterion_id": score.criterion_id,
+            "score": float(score.score) if score.score else None,
+            "rationale": score.rationale,
+        })
+    
+    brief["scoring"] = {
+        "scores_by_alternative": alt_scores,
+    }
+    
+    # 6. Recommendation
+    recommendation = db.query(DecisionRecommendationModel).filter(
+        DecisionRecommendationModel.decision_id == decision_id
+    ).first()
+    
+    if recommendation:
+        rec_data = {
+            "id": recommendation.id,
+            "recommended_alternative_id": recommendation.recommended_alternative_id,
+            "summary": recommendation.summary,
+            "rationale": recommendation.rationale,
+            "tradeoffs": recommendation.tradeoffs,
+            "generated_by_type": recommendation.generated_by_type,
+            "generated_by_id": recommendation.generated_by_id,
+            "created_at": recommendation.created_at.isoformat() if recommendation.created_at else None,
+        }
+        # Include recommended alternative details if available
+        if recommendation.recommended_alternative_id:
+            for alt in alternatives:
+                if alt.id == recommendation.recommended_alternative_id:
+                    rec_data["recommended_alternative_details"] = {
+                        "title": alt.title,
+                        "description": alt.description,
+                    }
+                    break
+        brief["recommendation"] = rec_data
+    else:
+        brief["recommendation"] = None
+    
+    # 7. Evidence list
+    evidence = db.query(DecisionEvidenceModel).filter(
+        DecisionEvidenceModel.decision_id == decision_id
+    ).all()
+    brief["evidence"] = [
+        {
+            "id": ev.id,
+            "type": ev.evidence_type,
+            "source_type": ev.source_type,
+            "source_id": ev.source_id,
+            "title": ev.title,
+            "summary": ev.summary,
+            "url_or_path": ev.url_or_path,
+        }
+        for ev in evidence
+    ]
+    
+    # 8. Approvals
+    approval_steps = db.query(DecisionApprovalStepModel).filter(
+        DecisionApprovalStepModel.decision_id == decision_id
+    ).all()
+    brief["approvals"] = [
+        {
+            "id": step.id,
+            "approver_type": step.approver_type,
+            "approver_id": step.approver_id,
+            "status": step.status,
+            "sequence_order": step.sequence_order,
+            "notes": step.notes,
+            "decided_at": step.decided_at.isoformat() if step.decided_at else None,
+        }
+        for step in approval_steps
+    ]
+    
+    # 9. Outcome reviews
+    outcome_reviews = db.query(DecisionOutcomeReviewModel).filter(
+        DecisionOutcomeReviewModel.decision_id == decision_id
+    ).all()
+    brief["outcome_reviews"] = [
+        {
+            "id": review.id,
+            "review_date": review.review_date.isoformat() if review.review_date else None,
+            "outcome_status": review.outcome_status,
+            "expected_vs_actual": review.expected_vs_actual,
+            "lessons_learned": review.lessons_learned,
+            "reviewed_by": review.reviewed_by,
+        }
+        for review in outcome_reviews
+    ]
+    
+    # 10. Timeline / events
+    events = db.query(DecisionEventModel).filter(
+        DecisionEventModel.decision_id == decision_id
+    ).order_by(DecisionEventModel.created_at).all()
+    brief["timeline"] = [
+        {
+            "id": event.id,
+            "event_type": event.event_type,
+            "event_data": event.event_data,
+            "created_at": event.created_at.isoformat() if event.created_at else None,
+        }
+        for event in events
+    ]
+    
+    return brief
