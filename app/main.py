@@ -76,3 +76,8 @@ if __name__ == "__main__":
 from app.api import framework as r_framework
 
 app.include_router(r_framework.router, prefix=settings.api_prefix)
+
+# Demo UI
+from app.api import demo as r_demo
+
+app.include_router(r_demo.router, prefix=settings.api_prefix)

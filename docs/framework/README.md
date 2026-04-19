@@ -114,3 +114,40 @@ pytest tests/framework/test_compiler.py -v
 ```
 
 Run 9 tests covering compile, import, diagnostics, and full round-trips.
+
+## Demo UI
+
+Access the interactive demo at `/demo/framework`.
+
+### Demo Sequence
+
+1. **Paste LangGraph JSON** in the input textarea
+2. Click **Compile Only** to see diagnostics without saving
+3. Click **Compile + Import** to create workflow in Decide
+4. Use **Validate/Publish/Run** buttons on imported workflow
+5. Click **Roundtrip** to see exported LangGraph
+
+### Demo Flow
+
+```bash
+# 1. Open in browser
+/demo/framework
+
+# 2. Paste workflow like:
+{
+  "name": "Demo Workflow",
+  "nodes": [
+    {"id": "start", "type": "start", "data": {}},
+    {"id": "llm", "type": "llm", "data": {"model": "gpt-4"}},
+    {"id": "end", "type": "end", "data": {}}
+  ],
+  "edges": [
+    {"source": "start", "target": "llm"},
+    {"source": "llm", "target": "end"}
+  ]
+}
+
+# 3. Click Compile + Import
+# 4. Use Validate/Publish/Run buttons
+# 5. Click Roundtrip to see exported
+```
