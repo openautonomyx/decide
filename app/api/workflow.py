@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.db.session import get_db
+from app.models.memory import MemorySpace, MemoryEntry
+from app.models.skill import SkillDefinition
 from app.models.workflow_definition import (
     WorkflowDefinition,
     WorkflowVersion,
@@ -526,6 +528,37 @@ def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
     if not workflow.is_published:
         raise HTTPException(400, "Workflow must be published before running")
     
+
+    # Resolve memory and skills for runtime context
+    tenant_id = workflow.tenant_id
+
+    # Resolve memory (organization scope)
+    memory_context = []
+    mem_space = db.query(MemorySpace).filter(
+        MemorySpace.tenant_id == tenant_id,
+        MemorySpace.scope_type == "organization",
+        MemorySpace.scope_id == tenant_id,
+    ).first()
+    if mem_space:
+        entries = db.query(MemoryEntry).filter(
+            MemoryEntry.memory_space_id == mem_space.id,
+            MemoryEntry.is_active == True,
+        ).all()
+        memory_context = [
+            {"id": e.id, "memory_type": e.memory_type, "content": e.content[:100]}
+            for e in entries
+        ]
+
+    # Resolve skills (organization scope)
+    resolved_skills = db.query(SkillDefinition).filter(
+        SkillDefinition.tenant_id == tenant_id,
+        SkillDefinition.scope_type == "organization",
+        SkillDefinition.status == "active",
+    ).all()
+    resolved_skills_data = [
+        {"id": s.id, "name": s.name, "skill_type": s.skill_type}
+        for s in resolved_skills
+    ]
     # Evaluate identity constraints - block run if fails
     identity_allowed, identity_reasons, _ = _evaluate_identity_for_workflow(
         db, workflow_id, workflow.tenant_id, "run"
@@ -666,6 +699,42 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         WorkflowRunStep.run_id == run_id
     ).order_by(WorkflowRunStep.started_at).all()
     
+    # Get workflow to resolve runtime context
+    workflow = db.query(WorkflowDefinition).filter(
+        WorkflowDefinition.id == workflow_id
+    ).first()
+    
+    # Resolve memory (organization scope)
+    memory_context = []
+    if workflow:
+        mem_space = db.query(MemorySpace).filter(
+            MemorySpace.tenant_id == workflow.tenant_id,
+            MemorySpace.scope_type == "organization",
+            MemorySpace.scope_id == workflow.tenant_id,
+        ).first()
+        if mem_space:
+            entries = db.query(MemoryEntry).filter(
+                MemoryEntry.memory_space_id == mem_space.id,
+                MemoryEntry.is_active == True,
+            ).all()
+            memory_context = [
+                {"id": e.id, "memory_type": e.memory_type, "content": e.content[:100]}
+                for e in entries
+            ]
+    
+    # Resolve skills (organization scope)
+    resolved_skills = []
+    if workflow:
+        skills = db.query(SkillDefinition).filter(
+            SkillDefinition.tenant_id == workflow.tenant_id,
+            SkillDefinition.scope_type == "organization",
+            SkillDefinition.status == "active",
+        ).all()
+        resolved_skills = [
+            {"id": s.id, "name": s.name, "skill_type": s.skill_type}
+            for s in skills
+        ]
+    
     return RunDetailResponse(
         id=run.id,
         workflow_id=run.workflow_id,
@@ -688,4 +757,6 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
             }
             for s in steps
         ],
+        memory_context=memory_context,
+        resolved_skills=resolved_skills,
     )
