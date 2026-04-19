@@ -80,3 +80,5 @@ def test_langgraph_import_publish_run_roundtrip(client_and_db):
     roundtrip = client.get(f"/api/v1/frameworks/roundtrip/{workflow_id}")
     assert roundtrip.status_code == 200, roundtrip.text
     assert len(roundtrip.json()["nodes"]) >= 2
+    roundtrip_node_ids = {node["id"] for node in roundtrip.json()["nodes"]}
+    assert any(node_id.startswith("start") for node_id in roundtrip_node_ids)
