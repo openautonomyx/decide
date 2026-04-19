@@ -25,7 +25,6 @@ Real API:
     GET /api/v1/skills/resolve
 """
 
-import asyncio
 from langflow.base import Component
 from langflow.inputs import AnyInput, StrInput, DropdownInput
 from langflow.outputs import AnyOutput
@@ -109,10 +108,8 @@ class SkillResolver(Component):
         client = get_decide_client()
         
         try:
-            response = asyncio.get_event_loop().run_until_complete(
-                client.resolve_skills(
-                    tenant_id=tenant_id,
-                )
+            response = client.resolve_skills(
+                tenant_id=tenant_id,
             )
             self.re_outputs.skills.send(response)
             self.re_outputs.tool_patterns.send([])

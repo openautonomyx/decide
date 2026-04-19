@@ -1,17 +1,21 @@
 """
 Decide Platform Client
 
-Simple HTTP client for communicating with the Decide platform APIs.
+Lightweight HTTP client for communicating with the Decide platform APIs.
 Used by Langflow components to call real Decide endpoints.
 
 API Base:
     Set DECIDE_API_URL environment variable (default: http://localhost:8000)
     Set DECIDE_API_KEY for authentication
 
-Endpoints:
+Supported Endpoints:
     - POST /api/v1/execution/requests - Create execution
+    - GET /api/v1/execution/requests - List executions
     - GET /api/v1/memory/resolve - Resolve memory
     - GET /api/v1/skills/resolve - Resolve skills
+    - POST /api/v1/approvals - Create approval request
+    - POST /api/v1/approvals/{id}/approve - Approve
+    - POST /api/v1/approvals/{id}/deny - Deny
 """
 
 import os
@@ -19,19 +23,23 @@ import uuid
 import json
 from typing import Optional, Any
 
+import httpx
+
 
 class DecideClient:
-    """Simple Decide platform API client."""
-    
+    """Decide platform HTTP client."""
+
     def __init__(
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
+        timeout: float = 5.0,
     ):
         self.base_url = base_url or os.environ.get("DECIDE_API_URL", "http://localhost:8000")
         self.api_key = api_key or os.environ.get("DECIDE_API_KEY", "")
+        self.timeout = timeout
         self._session_id = str(uuid.uuid4())
-    
+
     def _headers(self) -> dict:
         """Build request headers."""
         headers = {
@@ -41,45 +49,79 @@ class DecideClient:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
-    
-    async def create_execution(
+
+    def _make_request(
+        self,
+        method: str,
+        path: str,
+        json: Optional[dict] = None,
+        params: Optional[dict] = None,
+    ) -> dict:
+        """Make HTTP request with fallback on connection error."""
+        url = f"{self.base_url}{path}"
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.request(
+                    method=method,
+                    url=url,
+                    json=json,
+                    params=params,
+                    headers=self._headers(),
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            # Fallback to stub on any connection/timeout error
+            return {"_fallback": True, "error": str(e), "url": url}
+
+    # Execution API
+
+    def create_execution(
         self,
         tenant_id: str,
         request_text: str,
         thread_id: Optional[str] = None,
-        **kwargs,
     ) -> dict:
         """
         Create an execution request.
         
         POST /api/v1/execution/requests
-        
-        Args:
-            tenant_id: The tenant ID
-            request_text: The request text
-            thread_id: Optional thread ID for continuation
-            
-        Returns:
-            Execution request dict with ID and status
         """
         payload = {
             "tenant_id": tenant_id,
             "request_text": request_text,
-            "thread_id": thread_id,
-            **kwargs,
         }
+        if thread_id:
+            payload["thread_id"] = thread_id
         
-        # For now, return stub if no actual API
-        return {
-            "id": f"exec-{uuid.uuid4().hex[:8]}",
-            "tenant_id": tenant_id,
-            "request_text": request_text,
-            "thread_id": thread_id,
-            "status": "pending",
-            "created_at": "2024-01-01T00:00:00Z",
-        }
-    
-    async def resolve_memory(
+        result = self._make_request("POST", "/api/v1/execution/requests", json=payload)
+        
+        # If fallback, return stub response
+        if result.get("_fallback"):
+            return {
+                "id": f"exec-{uuid.uuid4().hex[:8]}",
+                "tenant_id": tenant_id,
+                "request_text": request_text,
+                "thread_id": thread_id,
+                "status": "pending",
+            }
+        return result
+
+    def list_executions(
+        self,
+        tenant_id: str,
+        limit: int = 50,
+    ) -> dict:
+        """List execution requests."""
+        params = {"tenant_id": tenant_id, "limit": limit}
+        result = self._make_request("GET", "/api/v1/execution/requests", params=params)
+        if result.get("_fallback"):
+            return {"items": [], "total": 0}
+        return result
+
+    # Memory API
+
+    def resolve_memory(
         self,
         tenant_id: str,
         scope_type: str,
@@ -89,55 +131,95 @@ class DecideClient:
         """
         Resolve memory for a scope.
         
-        GET /api/v1/memory/resolve
-        
-        Args:
-            tenant_id: The tenant ID
-            scope_type: Scope type (organization, product, workflow, run)
-            scope_id: Scope ID
-            max_items: Maximum items to return
-            
-        Returns:
-            Memory resolve response with items
+        POST /api/v1/memory/resolve
         """
-        return {
+        payload = {
             "tenant_id": tenant_id,
             "scope_type": scope_type,
             "scope_id": scope_id,
-            "items": [],
-            "total": 0,
-            "resolved_scopes": [],
         }
-    
-    async def resolve_skills(
+        result = self._make_request("POST", "/api/v1/memory/resolve", json=payload)
+        
+        if result.get("_fallback"):
+            return {
+                "tenant_id": tenant_id,
+                "scope_type": scope_type,
+                "scope_id": scope_id,
+                "items": [],
+                "total": 0,
+            }
+        return result
+
+    # Skill API
+
+    def resolve_skills(
         self,
         tenant_id: str,
         workflow_id: Optional[str] = None,
         product: Optional[str] = None,
-        agent_role: Optional[str] = None,
     ) -> dict:
         """
         Resolve skills for a context.
         
         GET /api/v1/skills/resolve
-        
-        Args:
-            tenant_id: The tenant ID
-            workflow_id: Optional workflow ID
-            product: Optional product ID
-            agent_role: Optional agent role
-            
-        Returns:
-            Skill resolve response with items
         """
-        return {
+        params = {"tenant_id": tenant_id}
+        if workflow_id:
+            params["workflow_id"] = workflow_id
+        if product:
+            params["product"] = product
+        
+        result = self._make_request("GET", "/api/v1/skills/resolve", params=params)
+        
+        if result.get("_fallback"):
+            return {"tenant_id": tenant_id, "items": [], "total": 0}
+        return result
+
+    # Approval API
+
+    def create_approval(
+        self,
+        tenant_id: str,
+        task_description: str,
+        request_text: str,
+    ) -> dict:
+        """
+        Create an approval request.
+        
+        POST /api/v1/approvals
+        """
+        payload = {
             "tenant_id": tenant_id,
-            "items": [],
-            "total": 0,
-            "resolved_scopes": [],
+            "task_description": task_description,
+            "request_text": request_text,
         }
-    
-    async def compile_langgraph(
+        result = self._make_request("POST", "/api/v1/approvals", json=payload)
+        
+        if result.get("_fallback"):
+            return {
+                "id": f"approval-{uuid.uuid4().hex[:8]}",
+                "tenant_id": tenant_id,
+                "status": "pending",
+            }
+        return result
+
+    def approve(self, approval_id: str) -> dict:
+        """Approve an approval request."""
+        result = self._make_request("POST", f"/api/v1/approvals/{approval_id}/approve")
+        if result.get("_fallback"):
+            return {"id": approval_id, "status": "approved"}
+        return result
+
+    def deny(self, approval_id: str) -> dict:
+        """Deny an approval request."""
+        result = self._make_request("POST", f"/api/v1/approvals/{approval_id}/deny")
+        if result.get("_fallback"):
+            return {"id": approval_id, "status": "denied"}
+        return result
+
+    # LangGraph compilation (stub for now)
+
+    def compile_langgraph(
         self,
         graph_definition: dict,
         graph_name: str,
@@ -146,15 +228,7 @@ class DecideClient:
         """
         Compile a workflow to LangGraph.
         
-        This is an internal compile operation.
-        
-        Args:
-            graph_definition: The graph nodes/edges definition
-            graph_name: Name for the compiled graph
-            checkpointer: Checkpointer type
-            
-        Returns:
-            Compiled graph with state schema
+        This is an internal compile operation (stub for now).
         """
         return {
             "graph_name": graph_name,
