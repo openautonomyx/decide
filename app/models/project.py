@@ -23,6 +23,6 @@ class Project(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    tenant = relationship("Tenant", backref="projects")
+    # Relationships (use foreign_keys for explicit relationship)
+    tenant = relationship("Tenant", foreign_keys=[tenant_id])
     parent_project = relationship("Project", remote_side=[id], backref="sub_projects")
