@@ -24,7 +24,6 @@ Real API:
     POST /api/v1/execution/requests
 """
 
-import asyncio
 from langflow.base import Component
 from langflow.inputs import AnyInput, StrInput
 from langflow.outputs import AnyOutput
@@ -110,13 +109,11 @@ class ExportToDecide(Component):
             request_text = json.dumps(results)
         
         try:
-            # Try to call real API
-            response = asyncio.get_event_loop().run_until_complete(
-                client.create_execution(
-                    tenant_id=tenant_id,
-                    request_text=request_text,
-                    thread_id=thread_id or None,
-                )
+            # Call real API (synchronous)
+            response = client.create_execution(
+                tenant_id=tenant_id,
+                request_text=request_text,
+                thread_id=thread_id or None,
             )
             self.re_outputs.export_ref.send(response)
         except Exception as e:

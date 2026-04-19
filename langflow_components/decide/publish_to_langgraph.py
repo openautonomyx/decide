@@ -20,7 +20,6 @@ Decide Concept Mapping:
     See: app/orchestrator/ - LangGraph integration
 """
 
-import asyncio
 from langflow.base import Component
 from langflow.inputs import AnyInput, StrInput
 from langflow.outputs import AnyOutput
@@ -85,12 +84,10 @@ class PublishToLangGraph(Component):
         client = get_decide_client()
         
         try:
-            response = asyncio.get_event_loop().run_until_complete(
-                client.compile_langgraph(
-                    graph_definition=graph_definition,
-                    graph_name=graph_name,
-                    checkpointer=checkpointer,
-                )
+            response = client.compile_langgraph(
+                graph_definition=graph_definition,
+                graph_name=graph_name,
+                checkpointer=checkpointer,
             )
             self.re_outputs.compiled_graph.send(response)
         except Exception as e:

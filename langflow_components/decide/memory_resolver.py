@@ -26,7 +26,6 @@ Real API:
     POST /api/v1/memory/resolve
 """
 
-import asyncio
 from langflow.base import Component
 from langflow.inputs import StrInput, IntInput, BoolInput, DropdownInput
 from langflow.outputs import AnyOutput
@@ -117,13 +116,11 @@ class MemoryResolver(Component):
         client = get_decide_client()
         
         try:
-            response = asyncio.get_event_loop().run_until_complete(
-                client.resolve_memory(
-                    tenant_id=tenant_id,
-                    scope_type=scope_type,
-                    scope_id=scope_id,
-                    max_items=max_history,
-                )
+            response = client.resolve_memory(
+                tenant_id=tenant_id,
+                scope_type=scope_type,
+                scope_id=scope_id,
+                max_items=max_history,
             )
             checkpoint_id = f"cp-{scope_id[:8]}" if scope_id else ""
             self.re_outputs.context.send(response)
