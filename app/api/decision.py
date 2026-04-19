@@ -365,47 +365,84 @@ def promote_decision_to_execution(decision_id: str, db: Session = Depends(get_db
     """
     Promote an approved decision to an execution request.
     
-    Interim rule: Requires decision to be in 'approved' status OR 
-    have a recommendation with all approval steps approved.
+    Interim approval rule (must satisfy ONE):
+      a) decision.status == "approved"
+      OR
+      b) there is at least one approval step AND all approval steps are approved
+    
+    Idempotency: Rejects if decision is already promoted.
     """
     # 1. Validate decision exists
     decision = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
     if not decision:
         raise HTTPException(404, "Decision not found")
     
-    # 2. Validate decision has a recommendation
+    # 2. Idempotency: prevent duplicate promotion
+    if decision.status == "promoted":
+        raise HTTPException(400, "Decision has already been promoted")
+    
+    # Check if promotion event exists
+    existing_promotion = db.query(DecisionEventModel).filter(
+        DecisionEventModel.decision_id == decision_id,
+        DecisionEventModel.event_type == "promoted_to_execution"
+    ).first()
+    if existing_promotion:
+        raise HTTPException(400, "Decision has already been promoted")
+    
+    # 3. Validate decision has a recommendation
     recommendation = db.query(DecisionRecommendationModel).filter(
         DecisionRecommendationModel.decision_id == decision_id
     ).first()
     if not recommendation:
         raise HTTPException(400, "Decision has no recommendation")
     
-    # 3. Validate approval requirements (interim rule)
+    # 4. Validate recommended_alternative belongs to this decision
+    if recommendation.recommended_alternative_id:
+        alt = db.query(DecisionAlternativeModel).filter(
+            DecisionAlternativeModel.id == recommendation.recommended_alternative_id,
+            DecisionAlternativeModel.decision_id == decision_id
+        ).first()
+        if not alt:
+            raise HTTPException(400, "Recommended alternative not found for this decision")
+    
+    # 5. Validate approval requirements (interim rule)
+    # Rule: (a) status == "approved" OR (b) all approval steps are approved
+    rule_a_satisfied = decision.status == "approved"
+    
     approval_steps = db.query(DecisionApprovalStepModel).filter(
         DecisionApprovalStepModel.decision_id == decision_id
     ).all()
     
+    rule_b_satisfied = False
     if approval_steps:
-        # Check if all approval steps are approved
-        pending_steps = [s for s in approval_steps if s.status != "approved"]
-        if pending_steps:
-            raise HTTPException(400, f"Decision has {len(pending_steps)} pending approval steps")
+        all_approved = all(s.status == "approved" for s in approval_steps)
+        if all_approved:
+            rule_b_satisfied = True
     
-    # 4. Get the recommended alternative
+    if not (rule_a_satisfied or rule_b_satisfied):
+        if rule_a_satisfied is False and rule_b_satisfied is False:
+            raise HTTPException(400, "Decision must be in 'approved' status or have all approval steps approved")
+        # More detailed message
+        if not approval_steps:
+            raise HTTPException(400, "Decision must have at least one approval step to be promoted")
+        pending = [s for s in approval_steps if s.status != "approved"]
+        raise HTTPException(400, f"Decision has {len(pending)} pending approval steps")
+    
+    # 6. Get the recommended alternative
     recommended_alt = None
     if recommendation.recommended_alternative_id:
         recommended_alt = db.query(DecisionAlternativeModel).filter(
             DecisionAlternativeModel.id == recommendation.recommended_alternative_id
         ).first()
     
-    # 5. Build execution request goal from decision data
+    # 7. Build execution request goal from decision data
     goal = f"Execute decision: {decision.title}"
     if recommendation.rationale:
         goal += f"\n\nRationale: {recommendation.rationale}"
     if recommended_alt and recommended_alt.description:
         goal += f"\n\nAlternative: {recommended_alt.title} - {recommended_alt.description}"
     
-    # 6. Create ExecutionRequest
+    # 8. Create ExecutionRequest
     exec_req = ExecutionRequestModel(
         id=str(uuid4()),
         tenant_id=decision.tenant_id,
@@ -418,7 +455,7 @@ def promote_decision_to_execution(decision_id: str, db: Session = Depends(get_db
     db.commit()
     db.refresh(exec_req)
     
-    # 7. Create DecisionRecord bridge for backward compatibility
+    # 9. Create DecisionRecord bridge for backward compatibility
     decision_record = DecisionRecordModel(
         id=str(uuid4()),
         execution_request_id=exec_req.id,
@@ -428,7 +465,15 @@ def promote_decision_to_execution(decision_id: str, db: Session = Depends(get_db
     db.add(decision_record)
     db.commit()
     
-    # 8. Create DecisionEvent for promotion
+    # 10. Create DecisionEvent for status change to promoted
+    _create_event(
+        db, 
+        decision_id, 
+        "status_changed", 
+        f'{{"old": "approved", "new": "promoted"}}'
+    )
+    
+    # 11. Create DecisionEvent for promotion
     _create_event(
         db, 
         decision_id, 
@@ -437,7 +482,7 @@ def promote_decision_to_execution(decision_id: str, db: Session = Depends(get_db
     )
     db.commit()
     
-    # 9. Update decision status
+    # 12. Update decision status
     decision.status = "promoted"
     db.commit()
     
