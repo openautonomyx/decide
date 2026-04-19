@@ -1,15 +1,30 @@
 """
 Autonomyx Backend - Main Application Entry Point
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.core.config import get_settings
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Seed default data on startup."""
+    from app.db.session import SessionLocal
+    db = SessionLocal()
+    try:
+        seed_all(db)
+    finally:
+        db.close()
+    yield
+
+
 app = FastAPI(
     title="Autonomyx API",
     description="Decision Intelligence Platform API",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -66,8 +81,16 @@ app.include_router(r_execution_identity.router, prefix=settings.api_prefix)
 app.include_router(r_frameworks.router, prefix=settings.api_prefix)
 
 # Memory and Skills platform
+from app.api import memory as r_memory
+from app.api import skill as r_skill_new
+from app.api import template as r_template
+from app.api import component as r_component
+from app.services.seed import seed_all
+
 app.include_router(r_memory.router, prefix=settings.api_prefix)
-app.include_router(r_skill.router, prefix=settings.api_prefix)
+app.include_router(r_skill_new.router, prefix=settings.api_prefix)
+app.include_router(r_template.router, prefix=settings.api_prefix)
+app.include_router(r_component.router, prefix=settings.api_prefix)
 
 # Traceability and Billing
 from app.api import trace as r_trace
