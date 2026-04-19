@@ -40,12 +40,15 @@ from app.api import collaboration as r_collaboration
 from app.api import tasks as r_workflow
 from app.api import channel as r_channel
 from app.api import runtime as r_runtime
-from app.api import skill as r_skill
 from app.api import tool as r_tool
 from app.api import context as r_context
 from app.api import decision as r_decision
 from app.api import workflow as r_workflow_definition
 from app.api import execution_identity as r_execution_identity
+
+# Memory and Skills platform (replaces old skill router)
+from app.api import memory as r_memory
+from app.api import skill as r_skill
 
 app.include_router(r_tenants.router, prefix=settings.api_prefix)
 app.include_router(r_employees.router, prefix=settings.api_prefix)
@@ -54,19 +57,15 @@ app.include_router(r_collaboration.router, prefix=settings.api_prefix)
 app.include_router(r_workflow.router, prefix=settings.api_prefix)
 app.include_router(r_channel.router, prefix=settings.api_prefix)
 app.include_router(r_runtime.router, prefix=settings.api_prefix)
-app.include_router(r_skill.router, prefix=settings.api_prefix)
 app.include_router(r_tool.router, prefix=settings.api_prefix)
 app.include_router(r_context.router, prefix=settings.api_prefix)
 app.include_router(r_decision.router, prefix=settings.api_prefix)
 app.include_router(r_workflow_definition.router, prefix=settings.api_prefix)
 app.include_router(r_execution_identity.router, prefix=settings.api_prefix)
 
-# New platforms
-from app.api import memory as r_memory
-from app.api import skill as r_skill_new
-
+# Memory and Skills platform
 app.include_router(r_memory.router, prefix=settings.api_prefix)
-app.include_router(r_skill_new.router, prefix=settings.api_prefix)
+app.include_router(r_skill.router, prefix=settings.api_prefix)
 
 
 if __name__ == "__main__":

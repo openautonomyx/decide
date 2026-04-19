@@ -107,19 +107,44 @@ async def resolve_skills(
     product: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    """Resolve applicable skills for a context."""
-    # Collect scopes to search
+    """
+    Resolve applicable skills for a context.
+    
+    Priority order:
+    1. organization (tenant-level)
+    2. product (product-specific)
+    3. workflow (workflow-specific)
+    4. agent_role (role-specific)
+    5. component/template (component or template specific)
+    
+    Supports filtering by workflow_id, template_id, component_id, agent_role, product.
+    """
+    # Collect scopes to search, with priority ordering
     scopes = []
-    if product:
-        scopes.append(("product", product))
-    if workflow_id:
-        scopes.append(("workflow", workflow_id))
+    
+    # Priority 5: component/template specific (lowest priority)
+    if component_id:
+        scopes.append(("component", component_id))
+    if template_id:
+        scopes.append(("template", template_id))
+    
+    # Priority 4: agent_role
     if agent_role:
         scopes.append(("agent_role", agent_role))
+    
+    # Priority 3: workflow
+    if workflow_id:
+        scopes.append(("workflow", workflow_id))
+    
+    # Priority 2: product
+    if product:
+        scopes.append(("product", product))
+    
+    # Priority 1: organization (always included, highest priority)
     scopes.append(("organization", tenant_id))
     
-    # Priority order: organization -> product -> workflow -> agent_role
-    lookup_order = ["organization", "product", "workflow", "agent_role"]
+    # Lookup order: organization -> product -> workflow -> agent_role -> component -> template
+    lookup_order = ["organization", "product", "workflow", "agent_role", "component", "template"]
     
     entries_by_scope = {}
     

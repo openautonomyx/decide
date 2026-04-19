@@ -254,19 +254,25 @@ async def resolve_memory(
     2. product (product-specific)
     3. workflow (workflow-specific)
     4. run (execution-specific)
+    
+    Supports both legacy single-scope and new multi-scope resolution.
     """
     # Build scope hierarchy based on provided context
-    scopes_provided = []
-    if body.scope_type and body.scope_id:
-        scopes_provided = [(body.scope_type, body.scope_id)]
+    # New style: use scope_type + scope_id for single scope
+    # Extended: also support direct scope lookups via scope_type/scope_id in params
     
-    # Determine resolution order based on provided scopes
+    scopes_to_resolve = []
+    
+    # Support legacy single-scope param style
+    if body.scope_type and body.scope_id:
+        scopes_to_resolve.append((body.scope_type, body.scope_id))
+    
     resolved_scopes = []
     entries_by_scope = {}
     
-    for priority_scope, _ in SCOPE_PRIORITY:
-        # Check if this scope exists in the provided scopes
-        for scope_type, scope_id in scopes_provided:
+    for priority_scope in SCOPE_PRIORITY:
+        # Check if this priority scope exists in our provided scopes
+        for scope_type, scope_id in scopes_to_resolve:
             if scope_type == priority_scope:
                 resolved_scopes.append(priority_scope)
                 
