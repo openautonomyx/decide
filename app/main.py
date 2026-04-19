@@ -45,6 +45,7 @@ from app.api import tool as r_tool
 from app.api import context as r_context
 from app.api import decision as r_decision
 from app.api import workflow as r_workflow_definition
+from app.api import execution_identity as r_execution_identity
 
 app.include_router(r_tenants.router, prefix=settings.api_prefix)
 app.include_router(r_employees.router, prefix=settings.api_prefix)
@@ -58,6 +59,7 @@ app.include_router(r_tool.router, prefix=settings.api_prefix)
 app.include_router(r_context.router, prefix=settings.api_prefix)
 app.include_router(r_decision.router, prefix=settings.api_prefix)
 app.include_router(r_workflow_definition.router, prefix=settings.api_prefix)
+app.include_router(r_execution_identity.router, prefix=settings.api_prefix)
 
 
 if __name__ == "__main__":
