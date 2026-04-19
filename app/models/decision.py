@@ -26,14 +26,60 @@ class Decision(Base):
 
     tenant = relationship("Tenant", backref="decisions")
     project = relationship("Project", backref="decisions")
-    alternatives = relationship("DecisionAlternative", back_populates="decision", cascade="all, delete-orphan")
-    evidence = relationship("DecisionEvidence", back_populates="decision", cascade="all, delete-orphan")
-    criteria = relationship("DecisionCriterion", back_populates="decision", cascade="all, delete-orphan")
-    scores = relationship("DecisionScore", back_populates="decision", cascade="all, delete-orphan")
-    recommendations = relationship("DecisionRecommendation", back_populates="decision", cascade="all, delete-orphan")
-    approval_steps = relationship("DecisionApprovalStep", back_populates="decision", cascade="all, delete-orphan")
-    outcome_reviews = relationship("DecisionOutcomeReview", back_populates="decision", cascade="all, delete-orphan")
-    events = relationship("DecisionEvent", back_populates="decision", cascade="all, delete-orphan")
+    alternatives = relationship(
+        "DecisionAlternative",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionAlternative.decision_id"
+    )
+    evidence = relationship(
+        "DecisionEvidence",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionEvidence.decision_id"
+    )
+    criteria = relationship(
+        "DecisionCriterion",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionCriterion.decision_id"
+    )
+    scores = relationship(
+        "DecisionScore",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionScore.decision_id"
+    )
+    recommendations = relationship(
+        "DecisionRecommendation",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionRecommendation.decision_id"
+    )
+    approval_steps = relationship(
+        "DecisionApprovalStep",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionApprovalStep.decision_id"
+    )
+    outcome_reviews = relationship(
+        "DecisionOutcomeReview",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionOutcomeReview.decision_id"
+    )
+    events = relationship(
+        "DecisionEvent",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionEvent.decision_id"
+    )
+    # Forward reference to recommended alternative
+    recommended_alternative = relationship(
+        "DecisionAlternative",
+        foreign_keys="decision.recommended_alternative_id",
+        uselist=False
+    )
 
 
 class DecisionAlternative(Base):
@@ -113,7 +159,10 @@ class DecisionRecommendation(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     decision = relationship("Decision", back_populates="recommendations")
-    recommended_alternative = relationship("DecisionAlternative")
+    recommended_alternative = relationship(
+        "DecisionAlternative",
+        foreign_keys="DecisionRecommendation.recommended_alternative_id"
+    )
 
 
 class DecisionApprovalStep(Base):
