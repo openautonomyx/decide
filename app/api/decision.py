@@ -20,12 +20,12 @@ from app.models.decision import (
 from app.schemas.decision import (
     DecisionCreate, DecisionUpdate, Decision, DecisionList,
     DecisionAlternativeCreate, DecisionAlternativeUpdate, DecisionAlternative, DecisionAlternativeList,
-    DecisionEvidenceCreate, DecisionEvidenceUpdate, DecisionEvidence, DecisionEvidenceList,
-    DecisionCriterionCreate, DecisionCriterionUpdate, DecisionCriterion, DecisionCriterionList,
-    DecisionScoreCreate, DecisionScoreUpdate, DecisionScore, DecisionScoreList,
-    DecisionRecommendationCreate, DecisionRecommendationUpdate, DecisionRecommendation, DecisionRecommendationList,
-    DecisionApprovalStepCreate, DecisionApprovalStepUpdate, DecisionApprovalStep, DecisionApprovalStepList,
-    DecisionOutcomeReviewCreate, DecisionOutcomeReviewUpdate, DecisionOutcomeReview, DecisionOutcomeReviewList,
+    DecisionEvidenceCreate, DecisionEvidence, DecisionEvidenceList,
+    DecisionCriterionCreate, DecisionCriterion, DecisionCriterionList,
+    DecisionScoreCreate, DecisionScore, DecisionScoreList,
+    DecisionRecommendationCreate, DecisionRecommendation, DecisionRecommendationList,
+    DecisionApprovalStepCreate, DecisionApprovalStep, DecisionApprovalStepList,
+    DecisionOutcomeReviewCreate, DecisionOutcomeReview, DecisionOutcomeReviewList,
     DecisionEvent, DecisionEventList,
 )
 
