@@ -3,6 +3,9 @@ from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Nume
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
+# Import Project to register with Base (handles FK dependency)
+from app.models.project import Project  # noqa: F401
+
 
 class Decision(Base):
     __tablename__ = "decision"

@@ -3,6 +3,9 @@ from sqlalchemy import Column, String, Integer, Boolean, DateTime, Date, Foreign
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
+# Import Project to register with Base (handles FK dependency)
+from app.models.project import Project  # noqa: F401
+
 
 class Task(Base):
     __tablename__ = "task"
