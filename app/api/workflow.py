@@ -53,13 +53,11 @@ def _evaluate_identity_for_workflow(
     if not adapter:
         return False, [f"Unknown provider: {binding.provider_name}"], {"provider": binding.provider_name}
     
-    # Fetch latest identity data
+    # Fetch latest identity data using asyncio.run for sync context
     normalized = None
     try:
         import asyncio
-        normalized = asyncio.get_event_loop().run_until_complete(
-            adapter.sync_identity(binding.external_identity_id)
-        )
+        normalized = asyncio.run(adapter.sync_identity(binding.external_identity_id))
     except Exception:
         # Fall back to cached binding data
         pass
@@ -101,7 +99,7 @@ def _evaluate_identity_for_workflow(
         "models_used": models_used,
     }
     
-    # Evaluate constraints
+    # Evaluate constraints (sync method)
     result = adapter.evaluate_constraints(normalized, workflow_context)
     
     # Store policy evaluation result
