@@ -221,3 +221,37 @@ class TestToolSkillApprovalMemory:
         assert "analyze" in result["skill_bindings_detected"]
         assert "policy-1" in result["approval_nodes_detected"]
         assert "context:workflow" in result["memory_bindings_detected"]
+
+
+class TestCompilerDiagnostics:
+    """Test compiler diagnostics output."""
+
+    def test_preserved_metadata(self):
+        """Test metadata is preserved."""
+        graph = {
+            "name": "Metadata Test",
+            "description": "Test workflow metadata",
+            "nodes": [
+                {"id": "start", "type": "start", "data": {}},
+                {"id": "tool", "type": "tool", "data": {"tool_name": "my_tool"}},
+                {"id": "end", "type": "end", "data": {}},
+            ],
+            "edges": [
+                {"source": "start", "target": "tool"},
+                {"source": "tool", "target": "end"},
+            ],
+            "tool_bindings": [
+                {"tool_id": "t1", "tool_name": "my_tool", "input_schema": {"type": "object"}},
+            ],
+            "skill_bindings": [
+                {"skill_id": "s1", "skill_slug": "my_skill", "skill_type": "prompt", "scope": "workflow"},
+            ],
+        }
+        
+        result = compile_langgraph_to_langflow(graph)
+        
+        # Check preserved metadata
+        assert result["preserved_metadata"]["original_name"] == "Metadata Test"
+        assert result["preserved_metadata"]["original_description"] == "Test workflow metadata"
+        assert "tools" in result["preserved_metadata"]
+        assert "skills" in result["preserved_metadata"]
