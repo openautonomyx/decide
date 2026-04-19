@@ -17,6 +17,10 @@ from app.models.decision import (
     DecisionOutcomeReview as DecisionOutcomeReviewModel,
     DecisionEvent as DecisionEventModel,
 )
+from app.models.control_plane import (
+    ExecutionRequest as ExecutionRequestModel,
+    DecisionRecord as DecisionRecordModel,
+)
 from app.schemas.decision import (
     DecisionCreate, DecisionUpdate, Decision, DecisionList,
     DecisionAlternativeCreate, DecisionAlternativeUpdate, DecisionAlternative, DecisionAlternativeList,
@@ -351,3 +355,95 @@ def list_decision_events(decision_id: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "Decision not found")
     items = db.query(DecisionEventModel).filter(DecisionEventModel.decision_id == decision_id).all()
     return DecisionEventList(total=len(items), items=items)
+
+
+# --- Promote to Execution ---
+
+
+@router.post("/{decision_id}/promote-to-execution", status_code=201)
+def promote_decision_to_execution(decision_id: str, db: Session = Depends(get_db)):
+    """
+    Promote an approved decision to an execution request.
+    
+    Interim rule: Requires decision to be in 'approved' status OR 
+    have a recommendation with all approval steps approved.
+    """
+    # 1. Validate decision exists
+    decision = db.query(DecisionModel).filter(DecisionModel.id == decision_id).first()
+    if not decision:
+        raise HTTPException(404, "Decision not found")
+    
+    # 2. Validate decision has a recommendation
+    recommendation = db.query(DecisionRecommendationModel).filter(
+        DecisionRecommendationModel.decision_id == decision_id
+    ).first()
+    if not recommendation:
+        raise HTTPException(400, "Decision has no recommendation")
+    
+    # 3. Validate approval requirements (interim rule)
+    approval_steps = db.query(DecisionApprovalStepModel).filter(
+        DecisionApprovalStepModel.decision_id == decision_id
+    ).all()
+    
+    if approval_steps:
+        # Check if all approval steps are approved
+        pending_steps = [s for s in approval_steps if s.status != "approved"]
+        if pending_steps:
+            raise HTTPException(400, f"Decision has {len(pending_steps)} pending approval steps")
+    
+    # 4. Get the recommended alternative
+    recommended_alt = None
+    if recommendation.recommended_alternative_id:
+        recommended_alt = db.query(DecisionAlternativeModel).filter(
+            DecisionAlternativeModel.id == recommendation.recommended_alternative_id
+        ).first()
+    
+    # 5. Build execution request goal from decision data
+    goal = f"Execute decision: {decision.title}"
+    if recommendation.rationale:
+        goal += f"\n\nRationale: {recommendation.rationale}"
+    if recommended_alt and recommended_alt.description:
+        goal += f"\n\nAlternative: {recommended_alt.title} - {recommended_alt.description}"
+    
+    # 6. Create ExecutionRequest
+    exec_req = ExecutionRequestModel(
+        id=str(uuid4()),
+        tenant_id=decision.tenant_id,
+        goal=goal,
+        capability="decision_execution",
+        quality="standard",
+        status="pending",
+    )
+    db.add(exec_req)
+    db.commit()
+    db.refresh(exec_req)
+    
+    # 7. Create DecisionRecord bridge for backward compatibility
+    decision_record = DecisionRecordModel(
+        id=str(uuid4()),
+        execution_request_id=exec_req.id,
+        decision_type="promoted_decision",
+        decision_reason=recommendation.rationale or recommendation.summary or "Decision promoted to execution",
+    )
+    db.add(decision_record)
+    db.commit()
+    
+    # 8. Create DecisionEvent for promotion
+    _create_event(
+        db, 
+        decision_id, 
+        "promoted_to_execution", 
+        f'{{"execution_request_id": "{exec_req.id}", "decision_record_id": "{decision_record.id}"}}'
+    )
+    db.commit()
+    
+    # 9. Update decision status
+    decision.status = "promoted"
+    db.commit()
+    
+    return {
+        "decision_id": decision_id,
+        "execution_request_id": exec_req.id,
+        "decision_record_id": decision_record.id,
+        "status": "promoted",
+    }
