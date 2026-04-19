@@ -4,13 +4,17 @@ Revision ID: add_decision_domain
 Revises: 
 Create Date: 2026-04-19 01:30:00.000000
 
+This is the first migration in the repo. The decision domain tables 
+were added as a new feature on top of existing tables (tenant, project, etc.)
+which were created via other means (e.g., SQL init scripts).
+
 """
 from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_decision_domain'
-down_revision = None
+down_revision = None  # This is the first migration in the repo
 branch_labels = None
 depends_on = None
 
