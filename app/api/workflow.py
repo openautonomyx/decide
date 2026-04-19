@@ -6,6 +6,7 @@ import json
 from uuid import uuid4
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Body
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -21,6 +22,7 @@ from app.models.workflow_definition import (
     WorkflowRunStep,
 )
 from app.models.execution_identity import ExecutionIdentityBinding, PolicyEvaluationResult
+from app.models.skill import SkillDefinition, SkillVersion, SkillBinding
 from app.integrations.identity.factory import get_adapter
 from app.services.memory_service import MemoryService
 
@@ -126,7 +128,8 @@ class LangFlowImport(BaseModel):
     tenant_id: str
     name: str
     description: str | None = None
-    flow_data: dict  # The raw Langflow JSON
+    flow_data: dict | None = None  # The raw Langflow JSON
+    langflow_data: dict | None = None  # Backward-compatible alias
 
 
 class ImportResponse(BaseModel):
@@ -185,10 +188,12 @@ class RunDetailResponse(BaseModel):
     memory_context: list[dict] = []
     memory_read_ids: list[str] = []
     memory_written_ids: list[str] = []
+    resolved_skills: list[dict] = []
 
 
 class RunRequest(BaseModel):
     product_id: str | None = None
+    agent_role: str | None = None
     session_id: str | None = None
     persist_memory: bool = False
     persist_scope: str = "run"  # run or workflow
@@ -224,16 +229,81 @@ def _get_edges_for_node(node_id: str, edges: list) -> list:
     return [e for e in edges if e.get("source") == node_id]
 
 
+def _resolve_skills_for_context(
+    db: Session,
+    tenant_id: str,
+    workflow_id: str | None = None,
+    product_id: str | None = None,
+    agent_role: str | None = None,
+) -> list[dict]:
+    """Resolve active skills and attach current version content where available."""
+    q = db.query(SkillDefinition).filter(
+        SkillDefinition.tenant_id == tenant_id,
+        SkillDefinition.status == "active",
+    )
+    scope_filters = [SkillDefinition.scope_type == "organization"]
+    if product_id:
+        scope_filters.append(
+            (SkillDefinition.scope_type == "product") & (SkillDefinition.scope_id == product_id)
+        )
+    if workflow_id:
+        scope_filters.append(
+            (SkillDefinition.scope_type == "workflow") & (SkillDefinition.scope_id == workflow_id)
+        )
+    if agent_role:
+        scope_filters.append(
+            (SkillDefinition.scope_type == "agent_role") & (SkillDefinition.scope_id == agent_role)
+        )
+    q = q.filter(or_(*scope_filters))
+    skills = q.order_by(SkillDefinition.created_at.desc()).all()
+
+    priority = {"organization": 1, "product": 2, "workflow": 3, "agent_role": 4}
+    skills = sorted(skills, key=lambda s: (priority.get(s.scope_type or "", 99), s.created_at))
+    out: list[dict] = []
+    seen_slugs: set[str] = set()
+    for skill in skills:
+        if skill.slug in seen_slugs:
+            continue
+        seen_slugs.add(skill.slug)
+        binding = None
+        if workflow_id:
+            binding = db.query(SkillBinding).filter(
+                SkillBinding.skill_id == skill.id,
+                SkillBinding.workflow_id == workflow_id,
+            ).first()
+        version = db.query(SkillVersion).filter(
+            SkillVersion.skill_id == skill.id,
+            SkillVersion.is_current == True,
+        ).order_by(SkillVersion.version_number.desc()).first()
+        out.append(
+            {
+                "id": skill.id,
+                "name": skill.name,
+                "slug": skill.slug,
+                "scope_type": skill.scope_type,
+                "scope_id": skill.scope_id,
+                "skill_type": skill.skill_type,
+                "binding_type": binding.binding_type if binding else None,
+                "current_version_id": version.id if version else None,
+                "current_version_number": version.version_number if version else None,
+                "current_content_json": version.content_json if version else None,
+            }
+        )
+    return out
+
+
 # Endpoints
 
 
-@router.post("/import/langflow", response_model=ImportResponse)
+@router.post("/import/langflow", response_model=ImportResponse, status_code=201)
 def import_langflow(import_data: LangFlowImport, db: Session = Depends(get_db)):
     """
     Import a Langflow-style workflow.
     Normalizes nodes and edges into DB records.
     """
-    flow_data = import_data.flow_data
+    flow_data = import_data.flow_data or import_data.langflow_data
+    if not flow_data:
+        raise HTTPException(400, "flow_data (or langflow_data) is required")
     nodes = flow_data.get("nodes", [])
     edges = flow_data.get("edges", [])
     
@@ -433,7 +503,7 @@ def validate_workflow(workflow_id: str, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/{workflow_id}/publish", response_model=PublishResponse)
+@router.post("/{workflow_id}/publish", response_model=PublishResponse, status_code=201)
 def publish_workflow(workflow_id: str, db: Session = Depends(get_db)):
     """
     Publish a workflow.
@@ -745,6 +815,17 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
     memory_context = json.loads(run.memory_context_json or "[]")
     memory_read_ids = json.loads(run.memory_read_ids_json or "[]")
     memory_written_ids = json.loads(run.memory_written_ids_json or "[]")
+
+    workflow = db.query(WorkflowDefinition).filter(WorkflowDefinition.id == workflow_id).first()
+    resolved_skills = _resolve_skills_for_context(
+        db,
+        tenant_id=workflow.tenant_id if workflow else "",
+        workflow_id=workflow_id,
+        product_id=None,
+        agent_role=None,
+    ) if workflow else []
+
+
     
     return RunDetailResponse(
         id=run.id,
@@ -771,4 +852,8 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         memory_context=memory_context,
         memory_read_ids=memory_read_ids,
         memory_written_ids=memory_written_ids,
+
+        resolved_skills=resolved_skills,
+
+
     )

@@ -94,8 +94,6 @@ async def import_langgraph_workflow(
     db.refresh(version)
 
     nodes_imported = 0
-    node_id_map = {}
-
     lf_flow = compile_result["langflow_flow"]
     for node in lf_flow.get("nodes", []):
         node_type = node.get("type", "unknown")
@@ -104,7 +102,6 @@ async def import_langgraph_workflow(
             continue
 
         node_db_id = str(uuid4())
-        node_id_map[node.get("id", "")] = node_db_id
 
         node_data = node.get("data", {})
         metadata = node_data.get("metadata", {})
@@ -135,16 +132,12 @@ async def import_langgraph_workflow(
     for edge in lf_flow.get("edges", []):
         source_original = edge.get("source", "")
         target_original = edge.get("target", "")
-
-        source_id = node_id_map.get(source_original)
-        target_id = node_id_map.get(target_original)
-
-        if source_id and target_id:
+        if source_original and target_original:
             wf_edge = WorkflowEdge(
                 id=str(uuid4()),
                 version_id=version_id,
-                source_node_id=source_id,
-                target_node_id=target_id,
+                source_node_id=source_original,
+                target_node_id=target_original,
                 edge_type="direct",
             )
             db.add(wf_edge)
@@ -229,17 +222,16 @@ async def roundtrip_export(workflow_id: str, db: Session = Depends(get_db)):
     edges = db.query(WorkflowEdge).filter(WorkflowEdge.version_id == version.id).all()
 
     langgraph_nodes = []
-    node_id_map = {}
-
     for node in nodes:
-        node_id_map[node.node_id] = node.id
         config = json.loads(node.config) if node.config else {}
 
         langgraph_nodes.append({
-            "id": node.id,
+            "id": node.node_id,
+            "legacy_id": node.id,
             "type": node.node_type,
             "data": config.get("original_data", {}),
             "metadata": {
+                "decide_node_db_id": node.id,
                 "original_type": config.get("original_type"),
                 "tool_config": config.get("tool_config", {}),
                 "skill_config": config.get("skill_config", {}),
@@ -251,12 +243,24 @@ async def roundtrip_export(workflow_id: str, db: Session = Depends(get_db)):
 
     langgraph_edges = []
     for edge in edges:
-        source_node = next((n for n in nodes if n.id == edge.source_node_id), None)
-        target_node = next((n for n in nodes if n.id == edge.target_node_id), None)
+        source_node = next(
+            (
+                n for n in nodes
+                if n.id == edge.source_node_id or n.node_id == edge.source_node_id
+            ),
+            None,
+        )
+        target_node = next(
+            (
+                n for n in nodes
+                if n.id == edge.target_node_id or n.node_id == edge.target_node_id
+            ),
+            None,
+        )
         if source_node and target_node:
             langgraph_edges.append({
-                "source": source_node.id,
-                "target": target_node.id,
+                "source": source_node.node_id,
+                "target": target_node.node_id,
             })
 
     return {

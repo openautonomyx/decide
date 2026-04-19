@@ -150,7 +150,7 @@ async def list_entries(
     q = db.query(MemoryEntry)
 
     if tenant_id or scope_type or scope_id:
-        q = q.join(MemorySpace)
+        q = q.join(MemorySpace, MemoryEntry.memory_space_id == MemorySpace.id)
         if tenant_id:
             q = q.filter(MemorySpace.tenant_id == tenant_id)
         if scope_type:
