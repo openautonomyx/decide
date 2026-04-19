@@ -17,6 +17,10 @@ Loading:
     ~/.langflow/custom_components/decide
     
     Or add to Python path and import the components.
+
+Environment Variables:
+    DECIDE_API_URL: Base URL for Decide API (default: http://localhost:8000)
+    DECIDE_API_KEY: API key for authentication
 """
 
 # Import all components for discovery by Langflow
@@ -27,6 +31,9 @@ from langflow_components.decide.memory_resolver import MemoryResolver
 from langflow_components.decide.skill_resolver import SkillResolver
 from langflow_components.decide.export_to_decide import ExportToDecide
 from langflow_components.decide.publish_to_langgraph import PublishToLangGraph
+
+# Import client for direct use
+from langflow_components.decide._client import DecideClient, get_decide_client
 
 
 # Component registry - used by Langflow for component discovery
@@ -49,5 +56,7 @@ __all__ = [
     "SkillResolver",
     "ExportToDecide",
     "PublishToLangGraph",
+    "DecideClient",
+    "get_decide_client",
     "COMPONENTS",
 ]

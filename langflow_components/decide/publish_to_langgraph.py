@@ -20,9 +20,12 @@ Decide Concept Mapping:
     See: app/orchestrator/ - LangGraph integration
 """
 
+import asyncio
 from langflow.base import Component
 from langflow.inputs import AnyInput, StrInput
 from langflow.outputs import AnyOutput
+
+from langflow_components.decide._client import get_decide_client
 
 
 class PublishToLangGraph(Component):
@@ -37,7 +40,7 @@ class PublishToLangGraph(Component):
             name="graph_definition",
             display_name="Graph Definition",
             required=True,
-            info="Graph definition to compile",
+            info="Graph definition to compile (nodes and edges)",
         ),
     ]
     
@@ -68,20 +71,36 @@ class PublishToLangGraph(Component):
         """
         Compile workflow to LangGraph.
         
-        This is a stub implementation. In a full integration:
-        1. Parse graph definition
-        2. Compile to LangGraph StateGraph
-        3. Return compiled graph
-        
-        Note: Requires langgraph library integration.
+        Calls the Decide client to compile the graph definition.
+        Falls back to stub if compilation fails.
         """
-        # TODO: Integrate with LangGraph compilation
         graph_definition = self.inputs.graph_definition
         graph_name = self.config.graph_name
         checkpointer = self.config.checkpointer
         
-        self.re_outputs.compiled_graph.send({
-            "graph_name": graph_name,
-            "checkpointer": checkpointer,
-            "status": "stub",
-        })
+        if not graph_name:
+            graph_name = f"graph-{id(graph_definition) or 'untitled'}"
+        
+        # Get client and compile
+        client = get_decide_client()
+        
+        try:
+            response = asyncio.get_event_loop().run_until_complete(
+                client.compile_langgraph(
+                    graph_definition=graph_definition,
+                    graph_name=graph_name,
+                    checkpointer=checkpointer,
+                )
+            )
+            self.re_outputs.compiled_graph.send(response)
+        except Exception as e:
+            # Fall back to stub
+            self.re_outputs.compiled_graph.send({
+                "graph_name": graph_name,
+                "checkpointer": checkpointer,
+                "nodes": graph_definition.get("nodes", []) if graph_definition else [],
+                "edges": graph_definition.get("edges", []) if graph_definition else [],
+                "status": "stub",
+                "fallback": True,
+                "error": str(e),
+            })
