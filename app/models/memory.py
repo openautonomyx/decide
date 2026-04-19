@@ -13,6 +13,8 @@ class MemorySpace(Base):
     scope_id = Column(String(36), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
+    metadata_json = Column(Text)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -28,6 +30,8 @@ class MemoryEntry(Base):
     tags_json = Column(Text)  # JSON array of tags
     source_type = Column(String(50))  # workflow, run, human, agent, system
     source_id = Column(String(36))
+    source_metadata_json = Column(Text)
+    metadata_json = Column(Text)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

@@ -5,13 +5,11 @@ Import, validate, publish, and run workflows.
 import json
 from uuid import uuid4
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.db.session import get_db
-from app.models.memory import MemorySpace, MemoryEntry
-from app.models.skill import SkillDefinition
 from app.models.workflow_definition import (
     WorkflowDefinition,
     WorkflowVersion,
@@ -24,6 +22,7 @@ from app.models.workflow_definition import (
 )
 from app.models.execution_identity import ExecutionIdentityBinding, PolicyEvaluationResult
 from app.integrations.identity.factory import get_adapter
+from app.services.memory_service import MemoryService
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
@@ -183,6 +182,18 @@ class RunDetailResponse(BaseModel):
     completed_at: str | None = None
     error_message: str | None = None
     steps: list
+    memory_context: list[dict] = []
+    memory_read_ids: list[str] = []
+    memory_written_ids: list[str] = []
+
+
+class RunRequest(BaseModel):
+    product_id: str | None = None
+    session_id: str | None = None
+    persist_memory: bool = False
+    persist_scope: str = "run"  # run or workflow
+    persist_memory_type: str = "summary"
+    persist_title: str | None = None
 
 
 # Helpers
@@ -513,7 +524,11 @@ def publish_workflow(workflow_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{workflow_id}/run", response_model=RunResponse)
-def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
+def run_workflow(
+    workflow_id: str,
+    run_request: RunRequest | None = Body(default=None),
+    db: Session = Depends(get_db),
+):
     """
     Execute a workflow.
     Simple interpreted execution for supported node types.
@@ -529,36 +544,9 @@ def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
         raise HTTPException(400, "Workflow must be published before running")
     
 
-    # Resolve memory and skills for runtime context
+    run_request = run_request or RunRequest()
     tenant_id = workflow.tenant_id
 
-    # Resolve memory (organization scope)
-    memory_context = []
-    mem_space = db.query(MemorySpace).filter(
-        MemorySpace.tenant_id == tenant_id,
-        MemorySpace.scope_type == "organization",
-        MemorySpace.scope_id == tenant_id,
-    ).first()
-    if mem_space:
-        entries = db.query(MemoryEntry).filter(
-            MemoryEntry.memory_space_id == mem_space.id,
-            MemoryEntry.is_active == True,
-        ).all()
-        memory_context = [
-            {"id": e.id, "memory_type": e.memory_type, "content": e.content[:100]}
-            for e in entries
-        ]
-
-    # Resolve skills (organization scope)
-    resolved_skills = db.query(SkillDefinition).filter(
-        SkillDefinition.tenant_id == tenant_id,
-        SkillDefinition.scope_type == "organization",
-        SkillDefinition.status == "active",
-    ).all()
-    resolved_skills_data = [
-        {"id": s.id, "name": s.name, "skill_type": s.skill_type}
-        for s in resolved_skills
-    ]
     # Evaluate identity constraints - block run if fails
     identity_allowed, identity_reasons, _ = _evaluate_identity_for_workflow(
         db, workflow_id, workflow.tenant_id, "run"
@@ -583,6 +571,39 @@ def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
     db.add(run)
     db.commit()
     db.refresh(run)
+
+    resolved_entries, _, resolved_context = MemoryService.resolve(
+        db,
+        tenant_id=tenant_id,
+        scopes={
+            "organization": tenant_id,
+            "product": run_request.product_id,
+            "workflow": workflow_id,
+            "run": run.id,
+            "session": run_request.session_id,
+        },
+        is_active=True,
+    )
+    memory_context = [
+        {
+            "scope_type": c["scope_type"],
+            "scope_id": c["scope_id"],
+            "entries": [
+                {
+                    "id": e.id,
+                    "memory_type": e.memory_type,
+                    "title": e.title,
+                    "content": e.content[:200],
+                }
+                for e in c["entries"]
+            ],
+        }
+        for c in resolved_context
+    ]
+    memory_read_ids = [e.id for e in resolved_entries]
+    run.memory_context_json = json.dumps(memory_context)
+    run.memory_read_ids_json = json.dumps(memory_read_ids)
+    db.commit()
     
     # Get nodes and edges
     nodes = db.query(WorkflowNode).filter(
@@ -672,6 +693,28 @@ def run_workflow(workflow_id: str, db: Session = Depends(get_db)):
     
     if run.status == "running":
         run.status = "completed"
+
+    memory_written_ids: list[str] = []
+    if run_request.persist_memory:
+        write_scope_id = run.id if run_request.persist_scope == "run" else workflow_id
+        written = MemoryService.persist_entry(
+            db,
+            tenant_id=tenant_id,
+            scope_type=run_request.persist_scope,
+            scope_id=write_scope_id,
+            memory_type=run_request.persist_memory_type,
+            title=run_request.persist_title or f"Workflow run summary {run.id}",
+            content=run.final_output or "Workflow completed without explicit output",
+            tags=["workflow", "writeback"],
+            source_type="run",
+            source_id=run.id,
+            source_metadata={"workflow_id": workflow_id},
+            metadata={"write_mode": "explicit"},
+        )
+        memory_written_ids.append(written.id)
+        run.memory_write_mode = "explicit"
+
+    run.memory_written_ids_json = json.dumps(memory_written_ids)
     
     db.commit()
     
@@ -699,41 +742,9 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         WorkflowRunStep.run_id == run_id
     ).order_by(WorkflowRunStep.started_at).all()
     
-    # Get workflow to resolve runtime context
-    workflow = db.query(WorkflowDefinition).filter(
-        WorkflowDefinition.id == workflow_id
-    ).first()
-    
-    # Resolve memory (organization scope)
-    memory_context = []
-    if workflow:
-        mem_space = db.query(MemorySpace).filter(
-            MemorySpace.tenant_id == workflow.tenant_id,
-            MemorySpace.scope_type == "organization",
-            MemorySpace.scope_id == workflow.tenant_id,
-        ).first()
-        if mem_space:
-            entries = db.query(MemoryEntry).filter(
-                MemoryEntry.memory_space_id == mem_space.id,
-                MemoryEntry.is_active == True,
-            ).all()
-            memory_context = [
-                {"id": e.id, "memory_type": e.memory_type, "content": e.content[:100]}
-                for e in entries
-            ]
-    
-    # Resolve skills (organization scope)
-    resolved_skills = []
-    if workflow:
-        skills = db.query(SkillDefinition).filter(
-            SkillDefinition.tenant_id == workflow.tenant_id,
-            SkillDefinition.scope_type == "organization",
-            SkillDefinition.status == "active",
-        ).all()
-        resolved_skills = [
-            {"id": s.id, "name": s.name, "skill_type": s.skill_type}
-            for s in skills
-        ]
+    memory_context = json.loads(run.memory_context_json or "[]")
+    memory_read_ids = json.loads(run.memory_read_ids_json or "[]")
+    memory_written_ids = json.loads(run.memory_written_ids_json or "[]")
     
     return RunDetailResponse(
         id=run.id,
@@ -758,5 +769,6 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
             for s in steps
         ],
         memory_context=memory_context,
-        resolved_skills=resolved_skills,
+        memory_read_ids=memory_read_ids,
+        memory_written_ids=memory_written_ids,
     )
