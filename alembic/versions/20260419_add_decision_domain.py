@@ -7,7 +7,6 @@ Create Date: 2026-04-19 01:30:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_decision_domain'
@@ -17,7 +16,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Decision table
+    # 1. Decision table (without FK to decision_alternative.recommended_alternative_id)
     op.create_table(
         'decision',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -41,11 +40,7 @@ def upgrade() -> None:
     op.create_index('ix_decision_project_id', 'decision', ['project_id'])
     op.create_index('ix_decision_status', 'decision', ['status'])
     
-    # Add FK for recommended_alternative_id after table exists
-    op.create_foreign_key('fk_decision_recommended_alt', 'decision', 'decision_alternative', 
-                         ['recommended_alternative_id'], ['id'])
-    
-    # DecisionAlternative table
+    # 2. DecisionAlternative table
     op.create_table(
         'decision_alternative',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -59,12 +54,11 @@ def upgrade() -> None:
     )
     op.create_index('ix_decision_alternative_decision_id', 'decision_alternative', ['decision_id'])
     
-    # Re-add FK for recommended_alternative_id (table now exists)
-    op.drop_constraint('fk_decision_recommended_alt', 'decision', type_='foreignkey')
-    op.create_foreign_key('fk_decision_recommended_alt', 'decision', 'decision_alternative', 
+    # 3. Add FK from decision.recommended_alternative_id to decision_alternative.id
+    op.create_foreign_key('fk_decision_recommended_alt', 'decision', 'decision_alternative',
                          ['recommended_alternative_id'], ['id'])
     
-    # DecisionEvidence table
+    # 4. DecisionEvidence table
     op.create_table(
         'decision_evidence',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -79,7 +73,7 @@ def upgrade() -> None:
     )
     op.create_index('ix_decision_evidence_decision_id', 'decision_evidence', ['decision_id'])
     
-    # DecisionCriterion table
+    # 5. DecisionCriterion table
     op.create_table(
         'decision_criterion',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -92,7 +86,7 @@ def upgrade() -> None:
     )
     op.create_index('ix_decision_criterion_decision_id', 'decision_criterion', ['decision_id'])
     
-    # DecisionScore table
+    # 6. DecisionScore table
     op.create_table(
         'decision_score',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -107,12 +101,12 @@ def upgrade() -> None:
     op.create_index('ix_decision_score_alternative_id', 'decision_score', ['alternative_id'])
     op.create_index('ix_decision_score_criterion_id', 'decision_score', ['criterion_id'])
     
-    # DecisionRecommendation table
+    # 7. DecisionRecommendation table
     op.create_table(
         'decision_recommendation',
         sa.Column('id', sa.String(36), primary_key=True),
         sa.Column('decision_id', sa.String(36), sa.ForeignKey('decision.id'), nullable=False),
-        sa.Column('recommended_alternative_id', sa.String(36), sa.ForeignKey('decision_alternative.id'), nullable=True),
+        sa.Column('recommended_alternative_id', sa.String(36), nullable=True),
         sa.Column('summary', sa.Text(), nullable=True),
         sa.Column('rationale', sa.Text(), nullable=True),
         sa.Column('tradeoffs', sa.Text(), nullable=True),
@@ -124,7 +118,7 @@ def upgrade() -> None:
     op.create_foreign_key('fk_recommendation_alt', 'decision_recommendation', 'decision_alternative',
                          ['recommended_alternative_id'], ['id'])
     
-    # DecisionApprovalStep table
+    # 8. DecisionApprovalStep table
     op.create_table(
         'decision_approval_step',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -139,7 +133,7 @@ def upgrade() -> None:
     )
     op.create_index('ix_decision_approval_step_decision_id', 'decision_approval_step', ['decision_id'])
     
-    # DecisionOutcomeReview table
+    # 9. DecisionOutcomeReview table
     op.create_table(
         'decision_outcome_review',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -153,7 +147,7 @@ def upgrade() -> None:
     )
     op.create_index('ix_decision_outcome_review_decision_id', 'decision_outcome_review', ['decision_id'])
     
-    # DecisionEvent table
+    # 10. DecisionEvent table
     op.create_table(
         'decision_event',
         sa.Column('id', sa.String(36), primary_key=True),
@@ -167,6 +161,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Drop tables in reverse order of creation
+    # FK constraints will be automatically dropped with their tables
     op.drop_table('decision_event')
     op.drop_table('decision_outcome_review')
     op.drop_table('decision_approval_step')
