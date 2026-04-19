@@ -8,14 +8,23 @@ API Base:
     Set DECIDE_API_URL environment variable (default: http://localhost:8000)
     Set DECIDE_API_KEY for authentication
 
-Supported Endpoints:
-    - POST /api/v1/execution/requests - Create execution
-    - GET /api/v1/execution/requests - List executions
-    - GET /api/v1/memory/resolve - Resolve memory
-    - GET /api/v1/skills/resolve - Resolve skills
-    - POST /api/v1/approvals - Create approval request
-    - POST /api/v1/approvals/{id}/approve - Approve
-    - POST /api/v1/approvals/{id}/deny - Deny
+EXISTING ROUTES VERIFIED IN REPO:
+    Execution (app/api/tasks.py - exec_router):
+        - POST /api/v1/execution/requests - Create execution
+        - GET /api/v1/execution/requests - List executions  
+        - GET /api/v1/execution/requests/{request_id} - Get execution
+    
+    Memory (app/api/memory.py):
+        - POST /api/v1/memory/resolve - Resolve memory entries
+    
+    Skills (app/api/skill.py):
+        - GET /api/v1/skills/resolve - Resolve skills
+    
+    Approvals (app/api/tasks.py - approval_router):
+        - POST /api/v1/approvals - Create approval request
+        - GET /api/v1/approvals/{approval_id} - Get approval
+        - POST /api/v1/approvals/{approval_id}/approve - Approve
+        - POST /api/v1/approvals/{approval_id}/deny - Deny
 """
 
 import os
