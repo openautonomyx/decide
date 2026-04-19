@@ -61,6 +61,13 @@ app.include_router(r_decision.router, prefix=settings.api_prefix)
 app.include_router(r_workflow_definition.router, prefix=settings.api_prefix)
 app.include_router(r_execution_identity.router, prefix=settings.api_prefix)
 
+# New platforms
+from app.api import memory as r_memory
+from app.api import skill as r_skill_new
+
+app.include_router(r_memory.router, prefix=settings.api_prefix)
+app.include_router(r_skill_new.router, prefix=settings.api_prefix)
+
 
 if __name__ == "__main__":
     import uvicorn
