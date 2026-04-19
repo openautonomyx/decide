@@ -83,3 +83,5 @@ def test_langgraph_import_publish_run_roundtrip(client_and_db):
     assert all("legacy_id" in node for node in roundtrip.json()["nodes"])
     roundtrip_node_ids = {node["id"] for node in roundtrip.json()["nodes"]}
     assert any(node_id.startswith("start") for node_id in roundtrip_node_ids)
+    for edge in roundtrip.json()["edges"]:
+        assert "source" in edge and "target" in edge

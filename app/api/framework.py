@@ -243,8 +243,20 @@ async def roundtrip_export(workflow_id: str, db: Session = Depends(get_db)):
 
     langgraph_edges = []
     for edge in edges:
-        source_node = next((n for n in nodes if n.id == edge.source_node_id), None)
-        target_node = next((n for n in nodes if n.id == edge.target_node_id), None)
+        source_node = next(
+            (
+                n for n in nodes
+                if n.id == edge.source_node_id or n.node_id == edge.source_node_id
+            ),
+            None,
+        )
+        target_node = next(
+            (
+                n for n in nodes
+                if n.id == edge.target_node_id or n.node_id == edge.target_node_id
+            ),
+            None,
+        )
         if source_node and target_node:
             langgraph_edges.append({
                 "source": source_node.node_id,
