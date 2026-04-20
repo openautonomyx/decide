@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+    paths:
+      - "services/vertex-claude-agent-starter/**"
+  pull_request:
+    paths:
+      - "services/vertex-claude-agent-starter/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/vertex-claude-agent-starter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e '.[dev]'
+      - run: pytest -q
