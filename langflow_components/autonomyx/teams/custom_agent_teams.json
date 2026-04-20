@@ -1,0 +1,45 @@
+{
+  "bundle": "Autonomyx AgentNxt Bundle",
+  "teams": [
+    {
+      "id": "integration_team",
+      "name": "Integration Team",
+      "mission": "Connect project systems, identity, and data sources.",
+      "agents": [
+        "connector_agent",
+        "import_agent",
+        "identity_agent"
+      ]
+    },
+    {
+      "id": "automation_team",
+      "name": "Automation Team",
+      "mission": "Convert policies and process docs into executable flows.",
+      "agents": [
+        "policy_agent",
+        "flow_builder_agent",
+        "orchestrator_agent"
+      ]
+    },
+    {
+      "id": "build_team",
+      "name": "Build Team",
+      "mission": "Assemble tools, skills, memory, and component mappings.",
+      "agents": [
+        "tooling_agent",
+        "skills_agent",
+        "memory_agent"
+      ]
+    },
+    {
+      "id": "deploy_team",
+      "name": "Deploy Team",
+      "mission": "Publish, notify, and route channels across environments.",
+      "agents": [
+        "release_agent",
+        "notify_agent",
+        "channels_agent"
+      ]
+    }
+  ]
+}

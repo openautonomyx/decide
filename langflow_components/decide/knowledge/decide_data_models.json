@@ -1,0 +1,3795 @@
+{
+  "count": 332,
+  "models": [
+    {
+      "name": "AgentBase",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "name",
+        "agent_type",
+        "is_primary"
+      ]
+    },
+    {
+      "name": "AgentCreate",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "AgentUpdate",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "name",
+        "agent_type",
+        "is_primary"
+      ]
+    },
+    {
+      "name": "Agent",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "AgentWithRelations",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "owner_employee_id",
+        "goals",
+        "skills"
+      ]
+    },
+    {
+      "name": "AgentGoalBase",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "goal_type",
+        "description",
+        "target_date"
+      ]
+    },
+    {
+      "name": "AgentGoalCreate",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "agent_id"
+      ]
+    },
+    {
+      "name": "AgentGoal",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "id",
+        "agent_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "AgentSkillBase",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "skill_code",
+        "skill_name",
+        "proficiency_level"
+      ]
+    },
+    {
+      "name": "AgentSkillCreate",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "agent_id"
+      ]
+    },
+    {
+      "name": "AgentSkill",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "id",
+        "agent_id"
+      ]
+    },
+    {
+      "name": "EmployeeAgentAssignmentBase",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "assignment_role"
+      ]
+    },
+    {
+      "name": "EmployeeAgentAssignmentCreate",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "employee_id",
+        "agent_id"
+      ]
+    },
+    {
+      "name": "EmployeeAgentAssignment",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "id",
+        "employee_id",
+        "agent_id",
+        "assigned_at",
+        "ended_at"
+      ]
+    },
+    {
+      "name": "AgentList",
+      "source": "app/schemas/agent.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "TenantBase",
+      "source": "app/schemas/tenant.py",
+      "fields": [
+        "name",
+        "enabled"
+      ]
+    },
+    {
+      "name": "TenantCreate",
+      "source": "app/schemas/tenant.py",
+      "fields": []
+    },
+    {
+      "name": "TenantUpdate",
+      "source": "app/schemas/tenant.py",
+      "fields": [
+        "name",
+        "enabled"
+      ]
+    },
+    {
+      "name": "Tenant",
+      "source": "app/schemas/tenant.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "TenantList",
+      "source": "app/schemas/tenant.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "TraceSessionBase",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "tenant_id",
+        "trace_id",
+        "session_type",
+        "status",
+        "duration_ms",
+        "metadata"
+      ]
+    },
+    {
+      "name": "TraceSessionCreate",
+      "source": "app/schemas/trace.py",
+      "fields": []
+    },
+    {
+      "name": "TraceSessionUpdate",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "status",
+        "ended_at",
+        "duration_ms",
+        "metadata"
+      ]
+    },
+    {
+      "name": "TraceSession",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "id",
+        "started_at",
+        "ended_at",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "TraceSessionList",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "TraceSpanRecordBase",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "trace_session_id",
+        "span_id",
+        "parent_span_id",
+        "service_name",
+        "operation_name",
+        "duration_ms",
+        "status_code",
+        "status_message",
+        "attributes",
+        "logs"
+      ]
+    },
+    {
+      "name": "TraceSpanRecordCreate",
+      "source": "app/schemas/trace.py",
+      "fields": []
+    },
+    {
+      "name": "TraceSpanRecord",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "id",
+        "start_time",
+        "end_time",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "TraceSpanRecordList",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "TraceLinkBase",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "from_trace_session_id",
+        "to_trace_session_id",
+        "to_span_id",
+        "link_type",
+        "metadata"
+      ]
+    },
+    {
+      "name": "TraceLinkCreate",
+      "source": "app/schemas/trace.py",
+      "fields": []
+    },
+    {
+      "name": "TraceLink",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "id",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "UsageRecordBase",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "tenant_id",
+        "trace_session_id",
+        "metric_name",
+        "quantity",
+        "unit",
+        "cost",
+        "period_start",
+        "period_end",
+        "metadata"
+      ]
+    },
+    {
+      "name": "UsageRecordCreate",
+      "source": "app/schemas/trace.py",
+      "fields": []
+    },
+    {
+      "name": "UsageRecord",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "id",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "UsageRecordList",
+      "source": "app/schemas/trace.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "MemorySpaceBase",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "tenant_id",
+        "scope_type",
+        "scope_id",
+        "name",
+        "description",
+        "metadata_json",
+        "is_active"
+      ]
+    },
+    {
+      "name": "MemorySpaceCreate",
+      "source": "app/schemas/memory.py",
+      "fields": []
+    },
+    {
+      "name": "MemorySpaceUpdate",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "name",
+        "description",
+        "is_active"
+      ]
+    },
+    {
+      "name": "MemorySpaceResponse",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "MemorySpaceList",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "MemoryEntryBase",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "memory_space_id",
+        "memory_type",
+        "title",
+        "content",
+        "tags_json",
+        "source_type",
+        "source_id",
+        "source_metadata_json",
+        "metadata_json",
+        "is_active"
+      ]
+    },
+    {
+      "name": "MemoryEntryCreate",
+      "source": "app/schemas/memory.py",
+      "fields": []
+    },
+    {
+      "name": "MemoryEntryUpdate",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "title",
+        "content",
+        "tags_json",
+        "source_metadata_json",
+        "metadata_json",
+        "is_active"
+      ]
+    },
+    {
+      "name": "MemoryEntryResponse",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "MemoryEntryList",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "MemoryResolveParams",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "tenant_id",
+        "organization_scope_id",
+        "product_scope_id",
+        "workflow_scope_id",
+        "run_scope_id",
+        "session_scope_id",
+        "scope_type",
+        "scope_id",
+        "memory_type",
+        "tags",
+        "limit_per_scope",
+        "is_active"
+      ]
+    },
+    {
+      "name": "MemoryContextItem",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "scope_type",
+        "scope_id",
+        "entries"
+      ]
+    },
+    {
+      "name": "MemoryResolveResponse",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "items",
+        "total",
+        "resolved_scopes",
+        "context"
+      ]
+    },
+    {
+      "name": "MemoryPersistRequest",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "tenant_id",
+        "scope_type",
+        "scope_id",
+        "memory_type",
+        "title",
+        "content",
+        "tags",
+        "source_type",
+        "source_id",
+        "source_metadata",
+        "metadata",
+        "space_name"
+      ]
+    },
+    {
+      "name": "MemoryRunInspection",
+      "source": "app/schemas/memory.py",
+      "fields": [
+        "run_id",
+        "memory_context",
+        "memory_read_ids",
+        "memory_written_ids"
+      ]
+    },
+    {
+      "name": "ComponentDefinitionCreate",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "name",
+        "display_name",
+        "description",
+        "category",
+        "icon"
+      ]
+    },
+    {
+      "name": "ComponentDefinitionResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "id",
+        "name",
+        "display_name",
+        "description",
+        "category",
+        "icon",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "ComponentDefinitionUpdate",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "name",
+        "display_name",
+        "description",
+        "category",
+        "icon"
+      ]
+    },
+    {
+      "name": "ComponentVersionCreate",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "component_id",
+        "version_number",
+        "schema"
+      ]
+    },
+    {
+      "name": "ComponentVersionResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "id",
+        "component_id",
+        "version_number",
+        "is_current",
+        "schema",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "ComponentCapabilityCreate",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "component_id",
+        "capability_type",
+        "capability_config"
+      ]
+    },
+    {
+      "name": "ComponentCapabilityResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "id",
+        "component_id",
+        "capability_type",
+        "capability_config",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "ComponentDefinitionListResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "components",
+        "total"
+      ]
+    },
+    {
+      "name": "ComponentVersionListResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "versions",
+        "total"
+      ]
+    },
+    {
+      "name": "ComponentCapabilityListResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "capabilities",
+        "total"
+      ]
+    },
+    {
+      "name": "ComponentResolvedResponse",
+      "source": "app/schemas/component.py",
+      "fields": [
+        "id",
+        "name",
+        "display_name",
+        "description",
+        "category",
+        "icon",
+        "current_version",
+        "capabilities",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "TaskBase",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "title",
+        "description",
+        "status",
+        "priority"
+      ]
+    },
+    {
+      "name": "TaskCreate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "tenant_id",
+        "project_id",
+        "assigned_to_employee_id",
+        "assigned_to_agent_id"
+      ]
+    },
+    {
+      "name": "TaskUpdate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "title",
+        "description",
+        "status",
+        "priority"
+      ]
+    },
+    {
+      "name": "Task",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "project_id",
+        "assigned_to_employee_id",
+        "assigned_to_agent_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "TaskList",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "TaskCommentBase",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "content"
+      ]
+    },
+    {
+      "name": "TaskCommentCreate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "task_id",
+        "author_type",
+        "author_id"
+      ]
+    },
+    {
+      "name": "TaskComment",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "id",
+        "task_id",
+        "author_type",
+        "author_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ExecutionRequestBase",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "goal",
+        "capability",
+        "quality"
+      ]
+    },
+    {
+      "name": "ExecutionRequestCreate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "ExecutionRequestUpdate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "status"
+      ]
+    },
+    {
+      "name": "ExecutionRequest",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "status",
+        "created_at",
+        "started_at",
+        "completed_at"
+      ]
+    },
+    {
+      "name": "ExecutionRequestWithHistory",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "history"
+      ]
+    },
+    {
+      "name": "ExecutionHistoryBase",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "event_type",
+        "event_data"
+      ]
+    },
+    {
+      "name": "ExecutionHistoryCreate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "execution_request_id",
+        "thread_id"
+      ]
+    },
+    {
+      "name": "ExecutionHistory",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "id",
+        "execution_request_id",
+        "thread_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ApprovalRequestBase",
+      "source": "app/schemas/task.py",
+      "fields": []
+    },
+    {
+      "name": "ApprovalRequestCreate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "execution_request_id",
+        "requested_by_type",
+        "requested_by_id"
+      ]
+    },
+    {
+      "name": "ApprovalRequestUpdate",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "status",
+        "approver_notes"
+      ]
+    },
+    {
+      "name": "ApprovalRequest",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "id",
+        "execution_request_id",
+        "status",
+        "requested_by_type",
+        "requested_by_id",
+        "approver",
+        "approver_notes",
+        "requested_at",
+        "decided_at"
+      ]
+    },
+    {
+      "name": "ExecutionRequestList",
+      "source": "app/schemas/task.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "BillingAdapterBindingBase",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "tenant_id",
+        "adapter_name",
+        "adapter_type",
+        "is_active",
+        "config"
+      ]
+    },
+    {
+      "name": "BillingAdapterBindingCreate",
+      "source": "app/schemas/billing.py",
+      "fields": []
+    },
+    {
+      "name": "BillingAdapterBinding",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "BillingAdapterBindingList",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "BillingAccountBindingBase",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "tenant_id",
+        "adapter_binding_id",
+        "external_account_id",
+        "account_name",
+        "status"
+      ]
+    },
+    {
+      "name": "BillingAccountBindingCreate",
+      "source": "app/schemas/billing.py",
+      "fields": []
+    },
+    {
+      "name": "BillingAccountBindingBind",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "adapter_binding_id",
+        "external_account_id",
+        "account_name"
+      ]
+    },
+    {
+      "name": "BillingAccountBinding",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "BillingAccountBindingList",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "BillingEventBase",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "tenant_id",
+        "account_binding_id",
+        "event_type",
+        "event_name",
+        "quantity",
+        "unit_price",
+        "amount",
+        "currency",
+        "period_start",
+        "period_end",
+        "metadata"
+      ]
+    },
+    {
+      "name": "BillingEventCreate",
+      "source": "app/schemas/billing.py",
+      "fields": []
+    },
+    {
+      "name": "BillingEvent",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "id",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "BillingEventList",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "MeterDefinitionBase",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "tenant_id",
+        "meter_name",
+        "display_name",
+        "description",
+        "unit",
+        "unit_price",
+        "aggregation_type",
+        "is_active"
+      ]
+    },
+    {
+      "name": "MeterDefinitionCreate",
+      "source": "app/schemas/billing.py",
+      "fields": []
+    },
+    {
+      "name": "MeterDefinition",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "MeterDefinitionList",
+      "source": "app/schemas/billing.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "TemplatePackCreate",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "name",
+        "description",
+        "is_default"
+      ]
+    },
+    {
+      "name": "TemplatePackResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "id",
+        "name",
+        "description",
+        "is_default",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "TemplatePackUpdate",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "name",
+        "description",
+        "is_default"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateCreate",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "pack_id",
+        "name",
+        "description",
+        "category",
+        "tags"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "id",
+        "pack_id",
+        "name",
+        "description",
+        "category",
+        "tags",
+        "is_published",
+        "published_version_id",
+        "created_at",
+        "updated_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateUpdate",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "name",
+        "description",
+        "category",
+        "tags",
+        "is_published"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateVersionCreate",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "template_id",
+        "runtime_spec"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateVersionResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "id",
+        "template_id",
+        "version_number",
+        "is_current",
+        "runtime_spec",
+        "created_at",
+        "from_attributes"
+      ]
+    },
+    {
+      "name": "TemplatePackListResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "template_packs",
+        "total"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateListResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "templates",
+        "total"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateVersionListResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "versions",
+        "total"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateResolvedResponse",
+      "source": "app/schemas/template.py",
+      "fields": [
+        "id",
+        "pack_id",
+        "name",
+        "description",
+        "category",
+        "tags",
+        "is_published",
+        "current_version",
+        "published_version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ProductBase",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "strategy"
+      ]
+    },
+    {
+      "name": "ProductCreate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "ProductUpdate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "strategy"
+      ]
+    },
+    {
+      "name": "Product",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "primary_channel_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ProductList",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "ProjectBase",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "name": "ProjectCreate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "ProjectUpdate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "name": "Project",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "channel_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ProjectList",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "GroupBase",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "group_type"
+      ]
+    },
+    {
+      "name": "GroupCreate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "GroupUpdate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "group_type"
+      ]
+    },
+    {
+      "name": "Group",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "primary_channel_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "GroupList",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "GroupMembershipBase",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "member_type",
+        "member_id"
+      ]
+    },
+    {
+      "name": "GroupMembershipCreate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "group_id"
+      ]
+    },
+    {
+      "name": "GroupMembership",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "id",
+        "group_id",
+        "joined_at",
+        "ended_at"
+      ]
+    },
+    {
+      "name": "ChannelBase",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "context_type",
+        "context_id",
+        "is_primary"
+      ]
+    },
+    {
+      "name": "ChannelCreate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "ChannelUpdate",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "name",
+        "is_primary"
+      ]
+    },
+    {
+      "name": "Channel",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ChannelList",
+      "source": "app/schemas/collaboration.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionStatus",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "DRAFT",
+        "IN_REVIEW",
+        "RECOMMENDED",
+        "APPROVED",
+        "REJECTED",
+        "PROMOTED",
+        "COMPLETED"
+      ]
+    },
+    {
+      "name": "DecisionBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "title",
+        "description",
+        "category",
+        "status",
+        "sponsor_type",
+        "sponsor_id",
+        "owner_type",
+        "owner_id",
+        "risk_level",
+        "decision_scope"
+      ]
+    },
+    {
+      "name": "DecisionCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "tenant_id",
+        "project_id"
+      ]
+    },
+    {
+      "name": "DecisionUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "title",
+        "description",
+        "category",
+        "status",
+        "sponsor_type",
+        "sponsor_id",
+        "owner_type",
+        "owner_id",
+        "risk_level",
+        "decision_scope",
+        "project_id",
+        "recommended_alternative_id"
+      ]
+    },
+    {
+      "name": "Decision",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "project_id",
+        "recommended_alternative_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "DecisionList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionAlternativeBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "title",
+        "description",
+        "status",
+        "estimated_cost",
+        "estimated_time_days"
+      ]
+    },
+    {
+      "name": "DecisionAlternativeCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id"
+      ]
+    },
+    {
+      "name": "DecisionAlternativeUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "title",
+        "description",
+        "status",
+        "estimated_cost",
+        "estimated_time_days"
+      ]
+    },
+    {
+      "name": "DecisionAlternative",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionAlternativeList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionEvidenceBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "title",
+        "evidence_type",
+        "source_type",
+        "source_id",
+        "summary",
+        "url_or_path"
+      ]
+    },
+    {
+      "name": "DecisionEvidenceCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id"
+      ]
+    },
+    {
+      "name": "DecisionEvidenceUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "title",
+        "evidence_type",
+        "source_type",
+        "source_id",
+        "summary",
+        "url_or_path"
+      ]
+    },
+    {
+      "name": "DecisionEvidence",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionEvidenceList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionCriterionBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "name",
+        "description",
+        "weight",
+        "scoring_method"
+      ]
+    },
+    {
+      "name": "DecisionCriterionCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id"
+      ]
+    },
+    {
+      "name": "DecisionCriterionUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "name",
+        "description",
+        "weight",
+        "scoring_method"
+      ]
+    },
+    {
+      "name": "DecisionCriterion",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionCriterionList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionScoreBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "score",
+        "rationale"
+      ]
+    },
+    {
+      "name": "DecisionScoreCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id",
+        "alternative_id",
+        "criterion_id"
+      ]
+    },
+    {
+      "name": "DecisionScoreUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "score",
+        "rationale"
+      ]
+    },
+    {
+      "name": "DecisionScore",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "alternative_id",
+        "criterion_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionScoreList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionRecommendationBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "summary",
+        "rationale",
+        "tradeoffs",
+        "generated_by_type",
+        "generated_by_id"
+      ]
+    },
+    {
+      "name": "DecisionRecommendationCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id",
+        "recommended_alternative_id"
+      ]
+    },
+    {
+      "name": "DecisionRecommendationUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "summary",
+        "rationale",
+        "tradeoffs",
+        "recommended_alternative_id"
+      ]
+    },
+    {
+      "name": "DecisionRecommendation",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "recommended_alternative_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionRecommendationList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionApprovalStepBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "approver_type",
+        "approver_id",
+        "status",
+        "sequence_order",
+        "notes"
+      ]
+    },
+    {
+      "name": "DecisionApprovalStepCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id"
+      ]
+    },
+    {
+      "name": "DecisionApprovalStepUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "approver_type",
+        "approver_id",
+        "status",
+        "notes"
+      ]
+    },
+    {
+      "name": "DecisionApprovalStep",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "decided_at",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionApprovalStepList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionOutcomeReviewBase",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "review_date",
+        "outcome_status",
+        "expected_vs_actual",
+        "lessons_learned",
+        "reviewed_by"
+      ]
+    },
+    {
+      "name": "DecisionOutcomeReviewCreate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "decision_id"
+      ]
+    },
+    {
+      "name": "DecisionOutcomeReviewUpdate",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "review_date",
+        "outcome_status",
+        "expected_vs_actual",
+        "lessons_learned",
+        "reviewed_by"
+      ]
+    },
+    {
+      "name": "DecisionOutcomeReview",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionOutcomeReviewList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionEvent",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "decision_id",
+        "event_type",
+        "event_data",
+        "created_at"
+      ]
+    },
+    {
+      "name": "DecisionEventList",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "DecisionDetail",
+      "source": "app/schemas/decision.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "project_id",
+        "title",
+        "description",
+        "category",
+        "status",
+        "sponsor_type",
+        "sponsor_id",
+        "owner_type",
+        "owner_id",
+        "risk_level",
+        "decision_scope",
+        "recommended_alternative_id",
+        "created_at",
+        "updated_at",
+        "alternatives",
+        "evidence",
+        "criteria",
+        "recommendation",
+        "approval_steps",
+        "outcome_reviews",
+        "events"
+      ]
+    },
+    {
+      "name": "EmployeeBase",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "name",
+        "email"
+      ]
+    },
+    {
+      "name": "EmployeeCreate",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "tenant_id"
+      ]
+    },
+    {
+      "name": "EmployeeUpdate",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "name",
+        "email"
+      ]
+    },
+    {
+      "name": "Employee",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "EmployeeWithIdentity",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "current_identity"
+      ]
+    },
+    {
+      "name": "EmployeeIdentityBase",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "job_title",
+        "department",
+        "seniority",
+        "reporting_to_employee_id"
+      ]
+    },
+    {
+      "name": "EmployeeIdentityCreate",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "employee_id"
+      ]
+    },
+    {
+      "name": "EmployeeIdentity",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "id",
+        "employee_id",
+        "effective_from",
+        "effective_to"
+      ]
+    },
+    {
+      "name": "EmployeeList",
+      "source": "app/schemas/employee.py",
+      "fields": [
+        "total",
+        "items"
+      ]
+    },
+    {
+      "name": "ExecutionIdentityBindingBase",
+      "source": "app/schemas/execution_identity.py",
+      "fields": [
+        "provider_name",
+        "workflow_id",
+        "workflow_version_id",
+        "template_id",
+        "external_identity_id",
+        "tenant_id",
+        "agent_name",
+        "agent_type",
+        "sponsor_id",
+        "owner_ids_json",
+        "manager_id",
+        "blueprint_id",
+        "allowed_models_json",
+        "budget_limit",
+        "tpm_limit",
+        "expires_at",
+        "status"
+      ]
+    },
+    {
+      "name": "ExecutionIdentityBindingCreate",
+      "source": "app/schemas/execution_identity.py",
+      "fields": []
+    },
+    {
+      "name": "ExecutionIdentityBindingUpdate",
+      "source": "app/schemas/execution_identity.py",
+      "fields": [
+        "workflow_id",
+        "workflow_version_id",
+        "template_id",
+        "status",
+        "metadata_json"
+      ]
+    },
+    {
+      "name": "ExecutionIdentityBindingResponse",
+      "source": "app/schemas/execution_identity.py",
+      "fields": [
+        "id",
+        "last_synced_at",
+        "metadata_json",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ExecutionIdentityBindingDetail",
+      "source": "app/schemas/execution_identity.py",
+      "fields": []
+    },
+    {
+      "name": "PolicyEvaluationResultBase",
+      "source": "app/schemas/execution_identity.py",
+      "fields": [
+        "provider_name",
+        "workflow_id",
+        "workflow_version_id",
+        "run_id",
+        "external_identity_id",
+        "evaluation_type",
+        "is_allowed",
+        "reasons_json",
+        "metadata_json"
+      ]
+    },
+    {
+      "name": "PolicyEvaluationResultCreate",
+      "source": "app/schemas/execution_identity.py",
+      "fields": []
+    },
+    {
+      "name": "PolicyEvaluationResultResponse",
+      "source": "app/schemas/execution_identity.py",
+      "fields": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ExecutionIdentityBindingList",
+      "source": "app/schemas/execution_identity.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "SkillDefinitionBase",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "tenant_id",
+        "scope_type",
+        "scope_id",
+        "name",
+        "slug",
+        "description",
+        "skill_type",
+        "status"
+      ]
+    },
+    {
+      "name": "SkillDefinitionCreate",
+      "source": "app/schemas/skill.py",
+      "fields": []
+    },
+    {
+      "name": "SkillDefinitionUpdate",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "name",
+        "description",
+        "status"
+      ]
+    },
+    {
+      "name": "SkillDefinitionResponse",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "SkillDefinitionList",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "SkillVersionBase",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "skill_id",
+        "version_number",
+        "content_json",
+        "input_schema_json",
+        "output_schema_json",
+        "tool_requirements_json",
+        "metadata_json",
+        "is_current"
+      ]
+    },
+    {
+      "name": "SkillVersionCreate",
+      "source": "app/schemas/skill.py",
+      "fields": []
+    },
+    {
+      "name": "SkillVersionUpdate",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "is_current"
+      ]
+    },
+    {
+      "name": "SkillVersionResponse",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SkillVersionList",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "SkillBindingBase",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "skill_id",
+        "workflow_id",
+        "template_id",
+        "component_id",
+        "agent_role",
+        "binding_type"
+      ]
+    },
+    {
+      "name": "SkillBindingCreate",
+      "source": "app/schemas/skill.py",
+      "fields": []
+    },
+    {
+      "name": "SkillBindingResponse",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SkillBindingList",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "SkillPromotionRecordBase",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "source_type",
+        "source_id",
+        "skill_id",
+        "promoted_by",
+        "reason",
+        "evidence_json"
+      ]
+    },
+    {
+      "name": "SkillPromotionRecordCreate",
+      "source": "app/schemas/skill.py",
+      "fields": []
+    },
+    {
+      "name": "SkillPromotionRecordResponse",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SkillPromotionRecordList",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "items",
+        "total"
+      ]
+    },
+    {
+      "name": "SkillResolveParams",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "tenant_id",
+        "scope_type",
+        "scope_id",
+        "workflow_id",
+        "template_id",
+        "component_id",
+        "agent_role"
+      ]
+    },
+    {
+      "name": "SkillResolveResponse",
+      "source": "app/schemas/skill.py",
+      "fields": [
+        "items",
+        "total",
+        "resolved_scopes"
+      ]
+    },
+    {
+      "name": "Tenant",
+      "source": "app/models/tenant_employee.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "Employee",
+      "source": "app/models/tenant_employee.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "email",
+        "name",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "EmployeeIdentity",
+      "source": "app/models/tenant_employee.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "employee_id",
+        "job_title",
+        "department",
+        "seniority",
+        "reporting_to_employee_id",
+        "effective_from",
+        "effective_to",
+        "employee"
+      ]
+    },
+    {
+      "name": "EmployeeEmployment",
+      "source": "app/models/tenant_employee.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "employee_id",
+        "start_date",
+        "end_date",
+        "employment_type",
+        "created_at"
+      ]
+    },
+    {
+      "name": "EmployeeEducation",
+      "source": "app/models/tenant_employee.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "employee_id",
+        "institution",
+        "degree",
+        "field_of_study",
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "name": "EmployeeCertification",
+      "source": "app/models/tenant_employee.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "employee_id",
+        "certification_code",
+        "certification_name",
+        "issued_date",
+        "expiry_date"
+      ]
+    },
+    {
+      "name": "Agent",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "name",
+        "agent_type",
+        "is_primary",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "AgentIdentity",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "projected_title",
+        "projected_department",
+        "effective_from",
+        "effective_to",
+        "agent"
+      ]
+    },
+    {
+      "name": "AgentProfile",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "behavioral_profile",
+        "operational_profile",
+        "agent"
+      ]
+    },
+    {
+      "name": "AgentSkill",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "skill_code",
+        "skill_name",
+        "proficiency_level",
+        "evidence",
+        "last_assessed",
+        "agent"
+      ]
+    },
+    {
+      "name": "AgentGovernanceProfile",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "prompt_profile_id",
+        "guardrail_profile_id",
+        "approval_profile_id",
+        "channel_profile_id",
+        "agent"
+      ]
+    },
+    {
+      "name": "AgentMemoryProfile",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "memory_enabled",
+        "thread_retention_days",
+        "checkpoint_interval_seconds",
+        "agent"
+      ]
+    },
+    {
+      "name": "AgentRelationship",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "from_agent_id",
+        "from_employee_id",
+        "to_agent_id",
+        "to_employee_id",
+        "relationship_type",
+        "from_agent",
+        "to_agent"
+      ]
+    },
+    {
+      "name": "EmployeeAgentAssignment",
+      "source": "app/models/agent.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "employee_id",
+        "agent_id",
+        "assignment_role",
+        "assigned_at",
+        "ended_at",
+        "employee",
+        "agent"
+      ]
+    },
+    {
+      "name": "PromptTemplate",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "profile_id",
+        "name",
+        "content",
+        "description",
+        "is_active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "PromptTemplateVersion",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "template_id",
+        "version",
+        "content",
+        "change_note",
+        "created_at",
+        "created_by"
+      ]
+    },
+    {
+      "name": "AgentPromptAssignment",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "prompt_template_id",
+        "assigned_at",
+        "assigned_by",
+        "ended_at"
+      ]
+    },
+    {
+      "name": "SkillProfile",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "description",
+        "is_default",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "SkillProfileSkill",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "profile_id",
+        "skill_code",
+        "proficiency_level",
+        "is_core",
+        "created_at"
+      ]
+    },
+    {
+      "name": "AgentGoal",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "goal_type",
+        "description",
+        "target_date",
+        "created_at",
+        "agent"
+      ]
+    },
+    {
+      "name": "GoalSuccessCriteria",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "goal_id",
+        "criteria_type",
+        "criteria_value",
+        "weight",
+        "created_at"
+      ]
+    },
+    {
+      "name": "GoalConstraint",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "goal_id",
+        "constraint_type",
+        "constraint_value",
+        "created_at"
+      ]
+    },
+    {
+      "name": "Timeline",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "agent_id",
+        "name",
+        "start_date",
+        "end_date",
+        "status",
+        "created_at",
+        "updated_at",
+        "agent"
+      ]
+    },
+    {
+      "name": "TimelineMilestone",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "timeline_id",
+        "name",
+        "target_date",
+        "status",
+        "description",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "TimelineDeadline",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "timeline_id",
+        "name",
+        "due_at",
+        "reminder_at",
+        "description",
+        "created_at"
+      ]
+    },
+    {
+      "name": "TimelineDependency",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "timeline_id",
+        "depends_on_timeline_id",
+        "dependency_type",
+        "created_at"
+      ]
+    },
+    {
+      "name": "AgentGroupMembership",
+      "source": "app/models/prompt_skills_goals_timelines.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "group_id",
+        "agent_id",
+        "role",
+        "joined_at",
+        "ended_at"
+      ]
+    },
+    {
+      "name": "ExecutionRequest",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "goal",
+        "capability",
+        "quality",
+        "status",
+        "created_at",
+        "started_at",
+        "completed_at",
+        "tenant",
+        "request_metadata",
+        "history",
+        "approvals"
+      ]
+    },
+    {
+      "name": "ExecutionRequestMetadata",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "key",
+        "value",
+        "execution_request"
+      ]
+    },
+    {
+      "name": "ExecutionHistory",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "thread_id",
+        "event_type",
+        "event_data",
+        "created_at",
+        "execution_request"
+      ]
+    },
+    {
+      "name": "PolicyResolution",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "policy_id",
+        "default_decision",
+        "decision_reason"
+      ]
+    },
+    {
+      "name": "BackendSelection",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "selected_backend",
+        "selection_order",
+        "selected_at"
+      ]
+    },
+    {
+      "name": "FallbackEvent",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "from_backend",
+        "to_backend",
+        "reason",
+        "triggered_at"
+      ]
+    },
+    {
+      "name": "ApprovalRequest",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "status",
+        "requested_by_type",
+        "requested_by_id",
+        "approver",
+        "approver_notes",
+        "requested_at",
+        "decided_at",
+        "execution_request"
+      ]
+    },
+    {
+      "name": "DecisionRecord",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "decision_type",
+        "decision_reason",
+        "decided_at"
+      ]
+    },
+    {
+      "name": "OverrideRecord",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "override_type",
+        "reason",
+        "applied_by",
+        "effective_from",
+        "effective_to",
+        "status"
+      ]
+    },
+    {
+      "name": "ResponsibilityAssignment",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "assignment_type",
+        "from_type",
+        "from_id",
+        "to_type",
+        "to_id",
+        "reason",
+        "effective_from",
+        "effective_to",
+        "status"
+      ]
+    },
+    {
+      "name": "UsageRecord",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "backend_used",
+        "provider",
+        "model",
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "cost",
+        "latency_ms"
+      ]
+    },
+    {
+      "name": "MemoryCheckpoint",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "execution_request_id",
+        "thread_id",
+        "checkpoint_data",
+        "created_at"
+      ]
+    },
+    {
+      "name": "TenantPolicy",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "name",
+        "enabled",
+        "quality_default",
+        "allow_fallback",
+        "max_retries",
+        "approval_required_for",
+        "max_budget_monthly",
+        "max_requests_per_hour",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "TenantPolicyBackendRule",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "policy_id",
+        "backend_id",
+        "rule_action",
+        "reason",
+        "created_at"
+      ]
+    },
+    {
+      "name": "TenantCapabilityPolicy",
+      "source": "app/models/control_plane.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "policy_id",
+        "capability",
+        "max_tokens_per_request",
+        "max_images_per_month",
+        "rate_limit_per_hour",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "TraceSession",
+      "source": "app/models/trace.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "trace_id",
+        "session_type",
+        "status",
+        "started_at",
+        "ended_at",
+        "duration_ms",
+        "metadata",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "TraceSpanRecord",
+      "source": "app/models/trace.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "trace_session_id",
+        "span_id",
+        "parent_span_id",
+        "service_name",
+        "operation_name",
+        "start_time",
+        "end_time",
+        "duration_ms",
+        "status_code",
+        "status_message",
+        "attributes",
+        "logs",
+        "created_at",
+        "trace_session"
+      ]
+    },
+    {
+      "name": "TraceLink",
+      "source": "app/models/trace.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "from_trace_session_id",
+        "to_trace_session_id",
+        "to_span_id",
+        "link_type",
+        "metadata",
+        "created_at",
+        "from_session",
+        "to_session"
+      ]
+    },
+    {
+      "name": "UsageRecord",
+      "source": "app/models/trace.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "trace_session_id",
+        "metric_name",
+        "quantity",
+        "unit",
+        "cost",
+        "period_start",
+        "period_end",
+        "metadata",
+        "created_at",
+        "tenant",
+        "trace_session"
+      ]
+    },
+    {
+      "name": "MemorySpace",
+      "source": "app/models/memory.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "scope_type",
+        "scope_id",
+        "name",
+        "description",
+        "metadata_json",
+        "is_active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "MemoryEntry",
+      "source": "app/models/memory.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "memory_space_id",
+        "memory_type",
+        "title",
+        "content",
+        "tags_json",
+        "source_type",
+        "source_id",
+        "source_metadata_json",
+        "metadata_json",
+        "is_active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ComponentDefinition",
+      "source": "app/models/component.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "display_name",
+        "description",
+        "category",
+        "icon",
+        "created_at",
+        "updated_at",
+        "versions",
+        "capabilities"
+      ]
+    },
+    {
+      "name": "ComponentVersion",
+      "source": "app/models/component.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "component_id",
+        "version_number",
+        "is_current",
+        "schema_json",
+        "created_at",
+        "component"
+      ]
+    },
+    {
+      "name": "ComponentCapability",
+      "source": "app/models/component.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "component_id",
+        "capability_type",
+        "capability_config",
+        "created_at",
+        "component"
+      ]
+    },
+    {
+      "name": "WorkflowDefinition",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "name",
+        "description",
+        "source_type",
+        "source_json",
+        "is_published",
+        "published_version_id",
+        "created_at",
+        "updated_at",
+        "tenant",
+        "versions"
+      ]
+    },
+    {
+      "name": "WorkflowVersion",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "workflow_id",
+        "version_number",
+        "is_current",
+        "runtime_spec",
+        "created_at",
+        "workflow",
+        "nodes",
+        "edges"
+      ]
+    },
+    {
+      "name": "WorkflowNode",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "version_id",
+        "node_type",
+        "node_id",
+        "label",
+        "config",
+        "position_x",
+        "position_y",
+        "created_at",
+        "version"
+      ]
+    },
+    {
+      "name": "WorkflowEdge",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "version_id",
+        "edge_id",
+        "source_node_id",
+        "target_node_id",
+        "edge_type",
+        "label",
+        "condition",
+        "created_at",
+        "version"
+      ]
+    },
+    {
+      "name": "WorkflowValidationResult",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "workflow_id",
+        "version_id",
+        "is_valid",
+        "issues_json",
+        "can_publish",
+        "created_at",
+        "workflow"
+      ]
+    },
+    {
+      "name": "WorkflowPublishArtifact",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "workflow_id",
+        "version_id",
+        "artifact_json",
+        "created_at",
+        "workflow"
+      ]
+    },
+    {
+      "name": "WorkflowRun",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "workflow_id",
+        "version_id",
+        "status",
+        "final_output",
+        "memory_context_json",
+        "resolved_skills_json",
+        "started_at",
+        "completed_at",
+        "error_message",
+        "memory_read_ids_json",
+        "memory_written_ids_json",
+        "memory_write_mode",
+        "workflow",
+        "steps"
+      ]
+    },
+    {
+      "name": "WorkflowRunStep",
+      "source": "app/models/workflow_definition.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "run_id",
+        "node_id",
+        "node_type",
+        "status",
+        "output",
+        "error",
+        "branch_decision",
+        "started_at",
+        "completed_at",
+        "run"
+      ]
+    },
+    {
+      "name": "Task",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "project_id",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "assigned_to_employee_id",
+        "assigned_to_agent_id",
+        "created_at",
+        "updated_at",
+        "tenant",
+        "project",
+        "comments",
+        "attachments"
+      ]
+    },
+    {
+      "name": "TaskDependency",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "depends_on_task_id",
+        "dependency_type",
+        "task"
+      ]
+    },
+    {
+      "name": "TaskAssignmentHistory",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "assigned_from_type",
+        "assigned_from_id",
+        "assigned_to_type",
+        "assigned_to_id",
+        "assigned_by",
+        "assigned_at"
+      ]
+    },
+    {
+      "name": "Milestone",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "project_id",
+        "name",
+        "target_date",
+        "status",
+        "created_at",
+        "updated_at",
+        "project"
+      ]
+    },
+    {
+      "name": "MilestoneTask",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "milestone_id",
+        "task_id"
+      ]
+    },
+    {
+      "name": "Deadline",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "due_at",
+        "reminder_at"
+      ]
+    },
+    {
+      "name": "Escalation",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "entity_type",
+        "entity_id",
+        "escalation_type",
+        "reason",
+        "escalated_to",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "Reminder",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "reminder_type",
+        "entity_type",
+        "entity_id",
+        "remind_at",
+        "message",
+        "status",
+        "created_at"
+      ]
+    },
+    {
+      "name": "TaskComment",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "author_type",
+        "author_id",
+        "content",
+        "parent_comment_id",
+        "created_at",
+        "task"
+      ]
+    },
+    {
+      "name": "TaskAttachment",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "file_asset_id",
+        "uploaded_by",
+        "created_at",
+        "task"
+      ]
+    },
+    {
+      "name": "TaskCommentAttachment",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_comment_id",
+        "file_asset_id"
+      ]
+    },
+    {
+      "name": "TaskRating",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "rating_type",
+        "score",
+        "rated_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "TaskFeedback",
+      "source": "app/models/workflow.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "task_id",
+        "content",
+        "provided_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "BillingAdapterBinding",
+      "source": "app/models/billing.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "adapter_name",
+        "adapter_type",
+        "is_active",
+        "config",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "BillingAccountBinding",
+      "source": "app/models/billing.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "adapter_binding_id",
+        "external_account_id",
+        "account_name",
+        "status",
+        "created_at",
+        "updated_at",
+        "tenant",
+        "adapter_binding"
+      ]
+    },
+    {
+      "name": "BillingEvent",
+      "source": "app/models/billing.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "account_binding_id",
+        "event_type",
+        "event_name",
+        "quantity",
+        "unit_price",
+        "amount",
+        "currency",
+        "period_start",
+        "period_end",
+        "metadata",
+        "created_at",
+        "tenant",
+        "account_binding"
+      ]
+    },
+    {
+      "name": "MeterDefinition",
+      "source": "app/models/billing.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "meter_name",
+        "display_name",
+        "description",
+        "unit",
+        "unit_price",
+        "aggregation_type",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "TemplatePack",
+      "source": "app/models/template.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "description",
+        "is_default",
+        "created_at",
+        "updated_at",
+        "templates"
+      ]
+    },
+    {
+      "name": "WorkflowTemplate",
+      "source": "app/models/template.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "pack_id",
+        "name",
+        "description",
+        "category",
+        "tags",
+        "is_published",
+        "published_version_id",
+        "created_at",
+        "updated_at",
+        "pack",
+        "versions"
+      ]
+    },
+    {
+      "name": "WorkflowTemplateVersion",
+      "source": "app/models/template.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "template_id",
+        "version_number",
+        "is_current",
+        "runtime_spec",
+        "created_at",
+        "template"
+      ]
+    },
+    {
+      "name": "DepartmentMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "parent_department_code",
+        "created_at"
+      ]
+    },
+    {
+      "name": "JobTitleMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SeniorityLevelMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "level_order",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SfiaSkillMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "category",
+        "created_at"
+      ]
+    },
+    {
+      "name": "CertificationMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "provider",
+        "created_at"
+      ]
+    },
+    {
+      "name": "InstitutionMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "institution_type",
+        "created_at"
+      ]
+    },
+    {
+      "name": "QualificationTypeMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "created_at"
+      ]
+    },
+    {
+      "name": "TopicMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "code",
+        "name",
+        "created_at"
+      ]
+    },
+    {
+      "name": "PromptProfileMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "description",
+        "is_default",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "GuardrailProfileMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "rules",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ApprovalProfileMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "rules",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "ChannelProfileMaster",
+      "source": "app/models/master_data.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "settings",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "Product",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "name",
+        "strategy",
+        "primary_channel_id",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "Project",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "name",
+        "start_date",
+        "end_date",
+        "channel_id",
+        "created_at",
+        "updated_at",
+        "tenant"
+      ]
+    },
+    {
+      "name": "GroupEntity",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "name",
+        "group_type",
+        "primary_channel_id",
+        "created_at",
+        "updated_at",
+        "tenant",
+        "memberships"
+      ]
+    },
+    {
+      "name": "GroupMembership",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "group_id",
+        "member_type",
+        "member_id",
+        "joined_at",
+        "ended_at",
+        "group"
+      ]
+    },
+    {
+      "name": "Channel",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "context_type",
+        "context_id",
+        "name",
+        "is_primary",
+        "created_at",
+        "updated_at",
+        "tenant",
+        "memberships",
+        "messages"
+      ]
+    },
+    {
+      "name": "ChannelMembership",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "channel_id",
+        "member_type",
+        "member_id",
+        "role",
+        "joined_at",
+        "ended_at",
+        "channel"
+      ]
+    },
+    {
+      "name": "ChannelMessage",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "channel_id",
+        "author_type",
+        "author_id",
+        "content",
+        "created_at",
+        "channel"
+      ]
+    },
+    {
+      "name": "FileAsset",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "uploaded_by_type",
+        "uploaded_by_id",
+        "file_name",
+        "file_path",
+        "file_size",
+        "mime_type",
+        "created_at"
+      ]
+    },
+    {
+      "name": "ChannelFile",
+      "source": "app/models/collaboration.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "channel_id",
+        "file_asset_id",
+        "uploaded_by",
+        "created_at"
+      ]
+    },
+    {
+      "name": "Decision",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "project_id",
+        "title",
+        "description",
+        "category",
+        "status",
+        "sponsor_type",
+        "sponsor_id",
+        "owner_type",
+        "owner_id",
+        "risk_level",
+        "decision_scope",
+        "recommended_alternative_id",
+        "created_at",
+        "updated_at",
+        "tenant",
+        "project",
+        "alternatives",
+        "back_populates",
+        "cascade",
+        "foreign_keys",
+        "evidence",
+        "criteria",
+        "scores",
+        "recommendations",
+        "approval_steps",
+        "outcome_reviews",
+        "events",
+        "recommended_alternative",
+        "uselist"
+      ]
+    },
+    {
+      "name": "DecisionAlternative",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "title",
+        "description",
+        "status",
+        "estimated_cost",
+        "estimated_time_days",
+        "created_at",
+        "decision",
+        "scores"
+      ]
+    },
+    {
+      "name": "DecisionEvidence",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "evidence_type",
+        "source_type",
+        "source_id",
+        "title",
+        "summary",
+        "url_or_path",
+        "created_at",
+        "decision"
+      ]
+    },
+    {
+      "name": "DecisionCriterion",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "name",
+        "description",
+        "weight",
+        "scoring_method",
+        "created_at",
+        "decision",
+        "scores"
+      ]
+    },
+    {
+      "name": "DecisionScore",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "alternative_id",
+        "criterion_id",
+        "score",
+        "rationale",
+        "created_at",
+        "decision",
+        "alternative",
+        "criterion"
+      ]
+    },
+    {
+      "name": "DecisionRecommendation",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "recommended_alternative_id",
+        "summary",
+        "rationale",
+        "tradeoffs",
+        "generated_by_type",
+        "generated_by_id",
+        "created_at",
+        "decision",
+        "recommended_alternative",
+        "foreign_keys"
+      ]
+    },
+    {
+      "name": "DecisionApprovalStep",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "approver_type",
+        "approver_id",
+        "status",
+        "sequence_order",
+        "notes",
+        "decided_at",
+        "created_at",
+        "decision"
+      ]
+    },
+    {
+      "name": "DecisionOutcomeReview",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "review_date",
+        "outcome_status",
+        "expected_vs_actual",
+        "lessons_learned",
+        "reviewed_by",
+        "created_at",
+        "decision"
+      ]
+    },
+    {
+      "name": "DecisionEvent",
+      "source": "app/models/decision.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "decision_id",
+        "event_type",
+        "event_data",
+        "created_at",
+        "decision"
+      ]
+    },
+    {
+      "name": "ExecutionIdentityBinding",
+      "source": "app/models/execution_identity.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "provider_name",
+        "workflow_id",
+        "workflow_version_id",
+        "template_id",
+        "external_identity_id",
+        "tenant_id",
+        "agent_name",
+        "agent_type",
+        "sponsor_id",
+        "owner_ids_json",
+        "manager_id",
+        "blueprint_id",
+        "allowed_models_json",
+        "budget_limit",
+        "tpm_limit",
+        "expires_at",
+        "status",
+        "last_synced_at",
+        "metadata_json",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "PolicyEvaluationResult",
+      "source": "app/models/execution_identity.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "provider_name",
+        "workflow_id",
+        "workflow_version_id",
+        "run_id",
+        "external_identity_id",
+        "evaluation_type",
+        "is_allowed",
+        "reasons_json",
+        "metadata_json",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SkillDefinition",
+      "source": "app/models/skill.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "tenant_id",
+        "scope_type",
+        "scope_id",
+        "name",
+        "slug",
+        "description",
+        "skill_type",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "SkillVersion",
+      "source": "app/models/skill.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "skill_id",
+        "version_number",
+        "content_json",
+        "input_schema_json",
+        "output_schema_json",
+        "tool_requirements_json",
+        "metadata_json",
+        "is_current",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SkillBinding",
+      "source": "app/models/skill.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "skill_id",
+        "workflow_id",
+        "template_id",
+        "component_id",
+        "agent_role",
+        "binding_type",
+        "created_at"
+      ]
+    },
+    {
+      "name": "SkillPromotionRecord",
+      "source": "app/models/skill.py",
+      "fields": [
+        "__tablename__",
+        "id",
+        "source_type",
+        "source_id",
+        "skill_id",
+        "promoted_by",
+        "reason",
+        "evidence_json",
+        "created_at"
+      ]
+    }
+  ]
+}

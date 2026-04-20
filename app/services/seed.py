@@ -54,7 +54,7 @@ def seed_template_packs_and_templates(db: Session):
                 "type": "llm",
                 "label": "Generate Content",
                 "config": {
-                    "model": "gpt-4o",
+                    "model": "gemma3:27b",
                     "prompt": "Generate a publish decision document.",
                 },
             },

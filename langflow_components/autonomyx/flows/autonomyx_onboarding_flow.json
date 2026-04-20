@@ -1,0 +1,325 @@
+{
+  "flows": [
+    {
+      "name": "Autonomyx Onboarding Flow",
+      "description": "Custom LangFlow agent that orchestrates Decide workflows with HRMS and Autonomyx integration. Uses SSO employee ID to query HRMS, resolve assigned agent from Autonomyx, then execute tasks.",
+      "nodes": [
+        {
+          "id": "sso_input",
+          "type": "ChatInput",
+          "position": {
+            "x": 100,
+            "y": 200
+          },
+          "data": {
+            "component_name": "ChatInput",
+            "template": {
+              "background_color": {
+                "value": "#FFFFFF"
+              },
+              "input_value": {
+                "value": ""
+              },
+              "sender": {
+                "value": "User"
+              },
+              "sender_name": {
+                "value": "User"
+              },
+              "session_id": {
+                "value": ""
+              }
+            }
+          }
+        },
+        {
+          "id": "hrms_resolver",
+          "type": "HRMSEmployeeResolver",
+          "position": {
+            "x": 300,
+            "y": 200
+          },
+          "data": {
+            "component_name": "HRMSEmployeeResolver",
+            "template": {
+              "employee_identifier": {
+                "value": "{{sso_input.message}}"
+              },
+              "hrms_provider": {
+                "value": "custom"
+              },
+              "fallback_tenant_id": {
+                "value": ""
+              }
+            }
+          }
+        },
+        {
+          "id": "agent_identity_resolver",
+          "type": "AgentIdentityResolver",
+          "position": {
+            "x": 500,
+            "y": 200
+          },
+          "data": {
+            "component_name": "AgentIdentityResolver",
+            "template": {
+              "employee_id": {
+                "value": "{{hrms_resolver.employee_data.employee_id}}"
+              },
+              "agent_identity_url": {
+                "value": ""
+              },
+              "fallback_agent_id": {
+                "value": ""
+              }
+            }
+          }
+        },
+        {
+          "id": "skill_resolver",
+          "type": "SkillResolver",
+          "position": {
+            "x": 700,
+            "y": 200
+          },
+          "data": {
+            "component_name": "SkillResolver",
+            "template": {
+              "tenant_id": {
+                "value": "{{hrms_resolver.employee_data.tenant_id}}"
+              },
+              "workflow_id": {
+                "value": ""
+              },
+              "product": {
+                "value": ""
+              }
+            }
+          }
+        },
+        {
+          "id": "policy_check",
+          "type": "PolicyCheck",
+          "position": {
+            "x": 700,
+            "y": 350
+          },
+          "data": {
+            "component_name": "PolicyCheck",
+            "template": {
+              "tenant_id": {
+                "value": "{{hrms_resolver.employee_data.tenant_id}}"
+              },
+              "action": {
+                "value": "{{sso_input.message}}"
+              },
+              "fallback_policy": {
+                "value": "allow"
+              }
+            }
+          }
+        },
+        {
+          "id": "approval_gate",
+          "type": "ApprovalGate",
+          "position": {
+            "x": 900,
+            "y": 200
+          },
+          "data": {
+            "component_name": "ApprovalGate",
+            "template": {
+              "input_data": {
+                "value": "{{skill_resolver.skill_data}}"
+              },
+              "approval_prompt": {
+                "value": "Request approval for {{sso_input.message}}"
+              },
+              "tenant_id": {
+                "value": "{{hrms_resolver.employee_data.tenant_id}}"
+              },
+              "task_description": {
+                "value": "{{sso_input.message}}"
+              },
+              "approver_role": {
+                "value": "manager"
+              },
+              "timeout_seconds": {
+                "value": 3600
+              }
+            }
+          }
+        },
+        {
+          "id": "agent_router",
+          "type": "Agent",
+          "position": {
+            "x": 1100,
+            "y": 200
+          },
+          "data": {
+            "component_name": "Agent",
+            "template": {
+              "model_name": {
+                "value": "gemma3:27b"
+              },
+              "system_prompt": {
+                "value": "You are a Decide agent assisting {{hrms_resolver.employee_data.display_name}} in the {{hrms_resolver.department_data.name}} department. Use the resolved skills: {{skill_resolver.skill_data}}"
+              },
+              "tools": {
+                "value": []
+              },
+              "max_iterations": {
+                "value": 10
+              }
+            }
+          }
+        },
+        {
+          "id": "memory_resolver",
+          "type": "MemoryResolver",
+          "position": {
+            "x": 1100,
+            "y": 350
+          },
+          "data": {
+            "component_name": "MemoryResolver",
+            "template": {
+              "tenant_id": {
+                "value": "{{hrms_resolver.employee_data.tenant_id}}"
+              },
+              "thread_id": {
+                "value": "{{hrms_resolver.employee_data.employee_id}}"
+              },
+              "max_items": {
+                "value": 5
+              }
+            }
+          }
+        },
+        {
+          "id": "export_to_decide",
+          "type": "ExportToDecide",
+          "position": {
+            "x": 1300,
+            "y": 200
+          },
+          "data": {
+            "component_name": "ExportToDecide",
+            "template": {
+              "execution_data": {
+                "value": "{{agent_router.response}}"
+              },
+              "tenant_id": {
+                "value": "{{hrms_resolver.employee_data.tenant_id}}"
+              },
+              "employee_id": {
+                "value": "{{hrms_resolver.employee_data.employee_id}}"
+              },
+              "thread_id": {
+                "value": "{{memory_resolver.thread_id}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "chat_output",
+          "type": "ChatOutput",
+          "position": {
+            "x": 1500,
+            "y": 200
+          },
+          "data": {
+            "component_name": "ChatOutput",
+            "template": {
+              "background_color": {
+                "value": "#FFFFFF"
+              },
+              "sender": {
+                "value": "AI"
+              },
+              "sender_name": {
+                "value": "Decide Agent"
+              }
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "sso_input",
+          "target": "hrms_resolver",
+          "sourceHandle": "message",
+          "targetHandle": "employee_identifier"
+        },
+        {
+          "source": "hrms_resolver",
+          "target": "agent_identity_resolver",
+          "sourceHandle": "employee_data",
+          "targetHandle": "employee_id"
+        },
+        {
+          "source": "hrms_resolver",
+          "target": "skill_resolver",
+          "sourceHandle": "employee_data",
+          "targetHandle": "tenant_id"
+        },
+        {
+          "source": "hrms_resolver",
+          "target": "policy_check",
+          "sourceHandle": "employee_data",
+          "targetHandle": "tenant_id"
+        },
+        {
+          "source": "policy_check",
+          "target": "approval_gate",
+          "sourceHandle": "approved",
+          "targetHandle": "input_data"
+        },
+        {
+          "source": "agent_identity_resolver",
+          "target": "agent_router",
+          "sourceHandle": "agent_config",
+          "targetHandle": "model_name"
+        },
+        {
+          "source": "agent_identity_resolver",
+          "target": "agent_router",
+          "sourceHandle": "agent_data",
+          "targetHandle": "system_prompt"
+        },
+        {
+          "source": "skill_resolver",
+          "target": "agent_router",
+          "sourceHandle": "skill_data",
+          "targetHandle": "system_prompt"
+        },
+        {
+          "source": "hrms_resolver",
+          "target": "memory_resolver",
+          "sourceHandle": "employee_data",
+          "targetHandle": "tenant_id"
+        },
+        {
+          "source": "agent_router",
+          "target": "export_to_decide",
+          "sourceHandle": "response",
+          "targetHandle": "execution_data"
+        },
+        {
+          "source": "export_to_decide",
+          "target": "chat_output",
+          "sourceHandle": "result",
+          "targetHandle": "message"
+        }
+      ]
+    }
+  ],
+  "version": "1.0",
+  "metadata": {
+    "created_at": "2026-04-19",
+    "author": "Decide Platform",
+    "description": "Agent orchestrator flow with HRMS integration"
+  }
+}

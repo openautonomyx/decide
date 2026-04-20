@@ -293,7 +293,7 @@ def compile_langgraph_to_langflow(graph_definition: dict) -> dict:
         "description": "A test workflow",
         "nodes": [
             {"id": "start", "type": "start", "data": {}, "metadata": {}},
-            {"id": "llm_node", "type": "llm", "data": {"model": "gpt-4"}, "metadata": {}},
+            {"id": "llm_node", "type": "llm", "data": {"model": "gemma3:27b"}, "metadata": {}},
             {"id": "end", "type": "end", "data": {}, "metadata": {}},
         ],
         "edges": [

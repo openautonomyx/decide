@@ -1,0 +1,19 @@
+{
+  "org_id": "org-001",
+  "org_name": "Example Org",
+  "enabled": true,
+  "auth": {
+    "provider": "oidc",
+    "client_id": "",
+    "client_secret": "",
+    "issuer": "https://id.example.com",
+    "auth_url": "",
+    "token_url": "",
+    "userinfo_url": "",
+    "scopes": [
+      "openid",
+      "profile",
+      "email"
+    ]
+  }
+}

@@ -51,7 +51,7 @@ DEMO_HTML = """
   "description": "A test workflow",
   "nodes": [
     {"id": "start", "type": "start", "data": {}},
-    {"id": "llm", "type": "llm", "data": {"model": "gpt-4"}},
+    {"id": "llm", "type": "llm", "data": {"model": "gemma3:27b"}},
     {"id": "end", "type": "end", "data": {}}
   ],
   "edges": [

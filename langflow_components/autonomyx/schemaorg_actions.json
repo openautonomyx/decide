@@ -1,0 +1,55 @@
+{
+  "source": "schema.org",
+  "version": "1.0",
+  "actions": [
+    {
+      "name": "SearchAction",
+      "description": "Search across knowledge and records",
+      "example": {
+        "query": "onboarding"
+      }
+    },
+    {
+      "name": "RegisterAction",
+      "description": "Register/onboard new entities",
+      "example": {
+        "entity_type": "tenant"
+      }
+    },
+    {
+      "name": "AuthorizeAction",
+      "description": "Authorize sensitive operations",
+      "example": {
+        "operation": "publish"
+      }
+    },
+    {
+      "name": "CreateAction",
+      "description": "Create workflow or artifact",
+      "example": {
+        "resource": "workflow"
+      }
+    },
+    {
+      "name": "UpdateAction",
+      "description": "Update existing resource",
+      "example": {
+        "resource": "skill"
+      }
+    },
+    {
+      "name": "DeleteAction",
+      "description": "Delete or archive resource",
+      "example": {
+        "resource": "memory_entry"
+      }
+    },
+    {
+      "name": "AssessAction",
+      "description": "Assess quality/risk/compliance",
+      "example": {
+        "target": "workflow"
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
+from pydantic import BaseModel
 import uuid
 import json
 
@@ -186,6 +187,72 @@ async def sync_binding(
     binding.metadata_json = json.dumps(normalized.provider_metadata)
     binding.last_synced_at = binding.updated_at
     
+    db.commit()
+    db.refresh(binding)
+    return binding
+
+
+
+
+class LoginSponsorMapRequest(BaseModel):
+    provider_name: str = "autonomyx_agent_identity"
+    tenant_id: str
+    sponsor_id: str
+    agent_name: Optional[str] = None
+    agent_type: Optional[str] = "human_sponsor"
+    external_identity_id: Optional[str] = None
+
+
+@router.post("/login-map", response_model=ExecutionIdentityBindingResponse)
+async def login_map_sponsor(
+    body: LoginSponsorMapRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Create/update agent_id to human sponsor mapping at login time.
+
+    Idempotent behavior:
+    - if mapping exists for (provider_name, tenant_id, sponsor_id): update metadata/timestamp
+    - else create a new active mapping
+    """
+    external_identity_id = body.external_identity_id or f"login::{body.tenant_id}::{body.sponsor_id}"
+
+    binding = (
+        db.query(ExecutionIdentityBinding)
+        .filter(ExecutionIdentityBinding.provider_name == body.provider_name)
+        .filter(ExecutionIdentityBinding.tenant_id == body.tenant_id)
+        .filter(ExecutionIdentityBinding.sponsor_id == body.sponsor_id)
+        .first()
+    )
+
+    metadata = {"auto_created": True, "source": "login_map"}
+
+    if binding:
+        binding.status = "active"
+        binding.external_identity_id = external_identity_id
+        binding.agent_name = body.agent_name or binding.agent_name
+        binding.agent_type = body.agent_type or binding.agent_type
+        binding.owner_ids_json = binding.owner_ids_json or json.dumps([body.sponsor_id])
+        binding.allowed_models_json = binding.allowed_models_json or json.dumps([])
+        binding.metadata_json = json.dumps(metadata)
+        db.commit()
+        db.refresh(binding)
+        return binding
+
+    binding = ExecutionIdentityBinding(
+        id=str(uuid.uuid4()),
+        provider_name=body.provider_name,
+        external_identity_id=external_identity_id,
+        tenant_id=body.tenant_id,
+        agent_name=body.agent_name or f"sponsor-{body.sponsor_id}",
+        agent_type=body.agent_type or "human_sponsor",
+        sponsor_id=body.sponsor_id,
+        owner_ids_json=json.dumps([body.sponsor_id]),
+        allowed_models_json=json.dumps([]),
+        status="active",
+        metadata_json=json.dumps(metadata),
+    )
+    db.add(binding)
     db.commit()
     db.refresh(binding)
     return binding

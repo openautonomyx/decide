@@ -39,7 +39,7 @@ class OpenAIChannelRuntime(ChannelRuntime):
         super().__init__(runtime_id, config or {})
         self._api_key = self.config.get("api_key", "")
         self._base_url = self.config.get("base_url", "https://api.openai.com/v1")
-        self._model = self.config.get("model", "gpt-4o")
+        self._model = self.config.get("model", "gemma3:27b")
         self._agent_instructions = self.config.get(
             "instructions",
             "You are Autonomyx, an AI assistant for the Autonomyx platform."

@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  langflow:
+    image: langflowai/langflow:latest
+    container_name: autonomyx-langflow
+    ports:
+      - "7860:7860"
+    environment:
+      - LANGFLOW_SUPERUSER=admin
+      - LANGFLOW_SUPERUSER_PASSWORD=admin123
+      - LANGFLOW_HOST=0.0.0.0
+      - LANGFLOW_PORT=7860
+    volumes:
+      - ./langflow_components:/app/langflow_components
+      - langflow_data:/app/.langflow
+    restart: unless-stopped
+volumes:
+  langflow_data:

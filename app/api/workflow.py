@@ -1140,7 +1140,4 @@ def get_run_detail(workflow_id: str, run_id: str, db: Session = Depends(get_db))
         memory_read_ids=memory_read_ids,
         memory_written_ids=memory_written_ids,
 
-        resolved_skills=resolved_skills,
-
-
     )

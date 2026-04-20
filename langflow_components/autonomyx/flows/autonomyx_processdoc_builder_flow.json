@@ -1,0 +1,14 @@
+{
+  "flows": [
+    {
+      "name": "Autonomyx ProcessDoc Builder Flow",
+      "description": "Upload process+policy docs and generate full flow blueprint.",
+      "nodes": [],
+      "edges": []
+    }
+  ],
+  "version": "1.0",
+  "metadata": {
+    "author": "Autonomyx Platform"
+  }
+}

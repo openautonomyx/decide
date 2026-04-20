@@ -34,7 +34,7 @@ class WorkerRuntime(BaseModel):
     runtime_id: str
     runtime_type: RuntimeType
     backend_provider: Optional[str] = None  # openai, anthropic, etc.
-    backend_model: Optional[str] = None  # gpt-4o, claude-3, etc.
+    backend_model: Optional[str] = None  # gemma3:27b, claude-3, etc.
     endpoint_url: Optional[str] = None
     config: dict = Field(default_factory=dict)
     capabilities: RuntimeCapability = Field(default_factory=RuntimeCapability)
@@ -114,7 +114,7 @@ class WorkerRuntimeRegistry:
             runtime_id="openai_agents",
             runtime_type=RuntimeType.OPENAI_AGENTS_SDK,
             backend_provider="openai",
-            backend_model="gpt-4o",
+            backend_model="gemma3:27b",
             capabilities=RuntimeCapability(
                 tags=["conversation", "general"],
                 supports_streaming=True,
@@ -147,7 +147,7 @@ class WorkerRuntimeRegistry:
             runtime_id="deep_agents",
             runtime_type=RuntimeType.DEEP_AGENTS,
             backend_provider="openai",
-            backend_model="gpt-4-turbo",
+            backend_model="gemma3:27b",
             capabilities=RuntimeCapability(
                 tags=["autonomous", "research"],
                 supports_streaming=True,
@@ -164,7 +164,7 @@ class WorkerRuntimeRegistry:
             runtime_id="crewai",
             runtime_type=RuntimeType.CREWAI,
             backend_provider="openai",
-            backend_model="gpt-4o",
+            backend_model="gemma3:27b",
             capabilities=RuntimeCapability(
                 tags=["collaboration", "research"],
                 supports_tools=True,
@@ -179,7 +179,7 @@ class WorkerRuntimeRegistry:
             runtime_id="langchain",
             runtime_type=RuntimeType.LANGCHAIN,
             backend_provider="openai",
-            backend_model="gpt-4o-mini",
+            backend_model="gemma3:27b",
             capabilities=RuntimeCapability(
                 tags=["simple", "retrieval"],
                 max_context_tokens=128000,
