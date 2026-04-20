@@ -83,19 +83,10 @@ The following are preserved in full and **must not be modified or bypassed** by 
 - Memory checkpoint coordination
 
 ```python
-# Example: LangGraph workflow for execution_request
+# Example: LangGraph workflow using Canonical State Schema (v2.1)
 from langgraph.graph import StateGraph, END
 
-class ExecutionState(TypedDict):
-    execution_request_id: str
-    tenant_id: str
-    goal: str
-    policy_resolution: dict | None
-    approval_status: str | None
-    backend_selected: str | None
-    result: dict | None
-    history: list[dict]
-
+# Use the canonical ExecutionState from section 3.1.1 above
 graph = StateGraph(ExecutionState)
 graph.add_node("evaluate_policy", evaluate_policy)
 graph.add_node("check_approval", check_approval)
@@ -107,7 +98,7 @@ graph.set_entry_point("evaluate_policy")
 graph.add_edge("evaluate_policy", "check_approval")
 graph.add_conditional_edges(
     "check_approval",
-    lambda s: "select_backend" if s["approval_status"] == "auto" else "await_approval",
+    lambda s: "select_backend" if s.get("approval_status") == "auto" else "await_approval",
     {"select_backend": "select_backend", "await_approval": END}
 )
 graph.add_edge("select_backend", "execute")
@@ -116,6 +107,321 @@ graph.add_edge("checkpoint", END)
 
 compiled = graph.compile()
 ```
+
+### 3.1.1 Canonical State Schema (v2.1)
+
+The following defines the canonical state schema organized into 10 families with clear separation between **config**, **runtime state**, **decision state**, and **outcome state**.
+
+**Layer Distinctions:**
+- **Config**: What was set ahead of time
+- **Runtime State**: What was true during execution
+- **Decision State**: What was chosen and why
+- **Outcome State**: What happened afterward
+
+```python
+from typing import TypedDict
+from typing_extensions import NotRequired
+
+class ExecutionState(TypedDict):
+    """
+    Canonical execution state machine with 10 families.
+    Preserves all v2 fields while adding structured organization.
+    """
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 1: IDENTITY, GOAL, AND AUTHORITY
+    # Who is acting, for what goal, with what authority
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config (set ahead of time)
+    user_id: str                          # Who initiated the request
+    tenant_id: str                       # Tenant context
+    user_expertise: str                 # beginner, intermediate, expert
+    
+    ## Runtime State (observed/derived)
+    intent_clarity: str                  # clear, ambiguous, unclear
+    goal: str                           # The goal being pursued
+    goal_id: NotRequired[str]           # Goal identifier
+    goal_type: NotRequired[str]        # Type: task, query, exploration
+    
+    ## Decision State (chosen)
+    auth_context: NotRequired[dict]     # Authorization context
+    approval_pattern: NotRequired[str]  # auto, manual, escalation
+    
+    ## Missing Fields (added)
+    boundary_clarity: NotRequired[str]   # clear, ambiguous, unclear
+    clarification_required: NotRequired[bool]
+    clarification_status: NotRequired[str]  # none, pending, answered
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 2: RUNTIME AND EXECUTION ENVIRONMENT
+    # Where and how execution happens
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    runtime: str                         # langgraph, openai_agents, claude_agent
+    os: NotRequired[str]                # Operating system
+    sandbox_mode: NotRequired[str]      # full, restricted, none
+    timeout_settings: NotRequired[dict]
+    
+    ## Runtime State
+    network_access: bool                  # Is network available
+    installed_tools: list[str]          # List of available tools
+    concurrent_usage: NotRequired[int] # Current concurrent usage
+    api_availability: NotRequired[dict] # API status
+    
+    ## Missing Fields (added)
+    execution_mode: NotRequired[str]    # sync, async
+    background_allowed: NotRequired[bool]
+    checkpointing_required: NotRequired[bool]
+    human_interruptibility: NotRequired[bool]
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 3: MODEL, PROVIDER, AND CAPABILITIES
+    # What model stack is available
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config (static capability - what model CAN do)
+    provider: str                       # openai, anthropic, etc.
+    model_variant: str                  # Specific model
+    llm_version: NotRequired[str]
+    modality: NotRequired[str]          # text, multimodal
+    tool_calling: bool                  # Model supports tool calling
+    structured_output: bool             # Model supports structured output
+    streaming: bool                    # Model supports streaming
+    code_execution: bool                # Model supports code execution
+    web_search: bool                   # Model supports web search
+    file_handling: bool                # Model supports file handling
+    context_window: int                # Configured context window size
+    
+    ## Runtime State (dynamic usage - what model IS using)
+    context_window_usage: NotRequired[dict]  # {input: int, output: int, total: int}
+    tokens_input: NotRequired[int]     # Actual tokens used (input)
+    tokens_output: NotRequired[int]    # Actual tokens used (output)
+    
+    ## Missing Fields (added)
+    pricing: NotRequired[dict]          # {input_cost_per_1k: float, output_cost_per_1k: float}
+    rate_limits: NotRequired[dict]     # Rate limit configuration
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 4: ROUTING, PLANNING, AND ORCHESTRATION
+    # How execution choices are made
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    agent_type: NotRequired[str]        # Types: agent, assistant, coordinator
+    delegation_depth: NotRequired[int] # How deep delegation goes
+    planning_mode: NotRequired[str]     # explicit, implicit, none
+    quality_threshold: NotRequired[float]
+    cost_budget: NotRequired[float]
+    
+    ## Decision State (runtime decisions - what model CHOSE to do)
+    routing_strategy: NotRequired[str]     # Strategy used for routing
+    tool_selection: NotRequired[list[str]]  # Tools selected for execution
+    routed_model: NotRequired[str]       # Model selected for routing
+    fallback_chain: NotRequired[list[str]]  # Fallback chain (DUPLICATE REMOVED: keep only here)
+    retry_strategy: NotRequired[str]     # Retry strategy
+    
+    ## Missing Fields (added)
+    decision_type: NotRequired[str]     # Type of decision made
+    rationale_trace: NotRequired[list[str]]  # Why decisions were made
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 5: SKILL, PROMPT, AND TOOLING LAYER
+    # Reusable operational capability pack
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config (static - what was configured)
+    skill: NotRequired[str]             # Skill being used
+    skill_version: NotRequired[str]        # Skill version (DUPLICATE REMOVED: keep only here)
+    prompt: NotRequired[str]            # Current prompt
+    system_prompt: NotRequired[str]    # System prompt
+    thinking_mode: NotRequired[str]    # Chain of thought mode
+    
+    ## Runtime State
+    tools: list[str]                   # Tools available
+    mcp_servers: NotRequired[list[str]] # MCP servers (DUPLICATE REMOVED: keep only here)
+    mcp_servers_connected: NotRequired[list[str]]  # Connected MCP servers
+    reference_docs_loaded: NotRequired[list[str]]
+    bundled_scripts: NotRequired[list[str]]
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 6: DATA, KNOWLEDGE, AND RETRIEVAL
+    # What information the system can draw from
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    schema: NotRequired[dict]            # Data schema
+    rag_data_sources: NotRequired[list[str]]  # RAG data sources
+    vector_db: NotRequired[str]          # Vector database
+    embedding_model: NotRequired[str]  # Embedding model
+    embedding_dimensions: NotRequired[int]
+    chunk_size: NotRequired[int]        # Chunk size for retrieval
+    chunk_overlap: NotRequired[int]       # Chunk overlap
+    top_k: NotRequired[int]           # Number of results to return
+    
+    ## Runtime State
+    user_data: NotRequired[dict]        # User data being used
+    data_volume: NotRequired[str]         # Volume: small, medium, large
+    data_freshness: NotRequired[str]     # Freshness: realtime, recent, stale
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 7: CONTEXT AND MEMORY
+    # What state is carried into the current decision
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    conversation_history_length: NotRequired[int]  # Configured history length
+    max_context_tokens: NotRequired[int]    # Configured max tokens
+    
+    ## Runtime State (observed/derived context)
+    context_window_usage: NotRequired[dict]  # Current usage
+    multi_agent_context: NotRequired[dict]   # Multi-agent context
+    session_state: NotRequired[dict]         # Current session state
+    persistent_memory: NotRequired[dict]    # Persistent memory
+    project_memory: NotRequired[dict]        # Project memory
+    feedback_memory: NotRequired[dict]         # Feedback memory
+    system_instructions: NotRequired[list[str]]  # Active system instructions
+    
+    ## Missing Fields (added)
+    context_snapshot_id: NotRequired[str]
+    context_freshness: NotRequired[str]       # fresh, stale
+    context_clarity: NotRequired[str]         # clear, ambiguous, unclear (context-specific)
+    context_change_detected: NotRequired[bool]
+    context_conflict_state: NotRequired[str]
+    context_revalidation_required: NotRequired[bool]
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 8: SAFETY, SECURITY, COMPLIANCE, AND BOUNDARIES
+    # What the system is not allowed to violate
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    content_filters: NotRequired[list[str]]  # Active content filters
+    secret_handling: NotRequired[str]     # How secrets are handled
+    pii_sensitivity: NotRequired[str]   # PII sensitivity level
+    audit_requirements: NotRequired[dict]  # Audit requirements
+    
+    ## Runtime State
+    sandbox_mode: NotRequired[str]        # Current sandbox mode
+    
+    ## Missing Fields (added)
+    policy_scope: NotRequired[list[str]]
+    data_classification: NotRequired[str]  # public, internal, confidential, restricted
+    tenant_scope: NotRequired[str]
+    cross_tenant_allowed: NotRequired[bool]  # Default: false
+    human_review_required: NotRequired[bool]
+    policy_evaluation_ref: NotRequired[str]
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 9: OUTPUT CONTRACT
+    # What kind of result is expected
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    format: NotRequired[str]              # Expected format: json, text, markdown
+    verbosity: NotRequired[str]          # terse, normal, detailed
+    audience: NotRequired[str]         # Target audience
+    determinism_required: NotRequired[bool]
+    
+    ## Missing Fields (added)
+    explainability_required: NotRequired[bool]
+    reversibility_requirement: NotRequired[bool]
+    citation_requirement: NotRequired[bool]
+    decision_lineage_ref: NotRequired[str]
+    source_provenance_ref: NotRequired[str]
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # FAMILY 10: EVALUATION, TELEMETRY, AND OUTCOMES
+    # How success is measured
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    ## Config
+    grader: NotRequired[str]           # Grader to use
+    rubric: NotRequired[dict]            # Evaluation rubric
+    baseline: NotRequired[dict]         # Baseline metrics
+    
+    ## Outcome State (measured after execution)
+    eval_score: NotRequired[float]       # Evaluation score
+    duration_seconds: NotRequired[float] # Execution duration
+    cost_llm: NotRequired[float]        # LLM cost
+    cost_infra: NotRequired[float]       # Infrastructure cost
+    steps_taken: NotRequired[int]      # Number of steps executed
+    user_confirmations: NotRequired[int]  # Number of confirmations
+    errors_encountered: NotRequired[list[str]]  # Errors encountered
+    completeness: NotRequired[str]        # complete, partial, failed
+    failure_rate: NotRequired[float]     # Failure rate
+    
+    ## Missing Fields (added)
+    ttft_ms: NotRequired[int]         # Time to first token (ms)
+    tokens_per_second: NotRequired[float]  # Generation speed
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # EXECUTION TRACKING FIELDS (from original v2)
+    # These are preserved and mapped to appropriate families
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    execution_request_id: str           # Family 1: Identity
+    policy_resolution: dict | None       # Family 8: Safety
+    approval_status: str | None         # Family 1: Authority
+    backend_selected: str | None        # Family 4: Routing (renamed from routing_strategy)
+    result: dict | None               # Family 10: Outcomes
+    history: list[dict]                # Family 7: Context
+    
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MULTI-TENANT FIELDS (added for platform)
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    tenant_id: str                     # Family 1: Identity
+    tenant_partition_key: NotRequired[str]
+    namespace_key: NotRequired[str]
+    basis_ref: NotRequired[str]       # Reference to basis for decision
+    success_metric: NotRequired[str]  # Metric for measuring success
+```
+
+### Duplicate Removal Summary
+
+The following duplicates were identified and consolidated:
+
+| Field | Original Locations | Canonical Location |
+|-------|-----------------|-------------------|
+| `skill_version` | Core, Skill Configuration, Versioning | Family 5: Skill, Prompt, Tooling Layer |
+| `mcp_servers` | Core, Skill Configuration | Family 5: Skill, Prompt, Tooling Layer |
+| `fallback_chain` | Agent Architecture, Task-Model Routing | Family 4: Routing, Planning, Orchestration |
+
+### Field Category Summary
+
+| Category | Families | Count |
+|----------|----------|-------|
+| Config (set ahead of time) | 1, 2, 3, 4, 5, 6, 9 | ~35 fields |
+| Runtime State (during execution) | 1, 2, 3, 5, 6, 7, 8 | ~30 fields |
+| Decision State (chosen) | 1, 4 | ~10 fields |
+| Outcome State (after execution) | 3, 10 | ~20 fields |
+
+### Implementation Note
+
+This schema can be split into separate TypedDict classes:
+
+- `ExecutionConfig` - Config fields only
+- `RuntimeState` - Runtime state fields only  
+- `ContextState` - Context/memory fields
+- `RoutingDecision` - Decision state fields
+- `GovernanceState` - Safety/security fields
+- `OutputContract` - Output expectation fields
+- `EvaluationResult` - Outcome fields
+
+This separation enables clearer validation and state management.
 
 ### 3.2 OpenAI Agents SDK as Human-Facing Runtime
 
