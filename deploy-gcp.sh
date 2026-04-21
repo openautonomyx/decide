@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
-# Deploy Decide API to Google Cloud Run with Cloud SQL (Postgres) and Memorystore (Redis)
+set -euo pipefail
+
+# Deploy Decide API to Google Cloud Run with Cloud SQL (Postgres) and optional VPC access.
 #
 # Required env vars:
-#   PROJECT_ID, REGION, SERVICE_NAME, SQL_INSTANCE, DB_NAME, DB_USER, DB_PASSWORD, SECRET_KEY
-# Optional env vars:
-#   IMAGE_NAME (default: decide-api), VPC_CONNECTOR, ALLOW_UNAUTHENTICATED (default: true)
+# PROJECT_ID, REGION, SERVICE_NAME, SQL_INSTANCE, DB_NAME, DB_USER, DB_PASSWORD, SECRET_KEY
 #
-# Usage:
-#   PROJECT_ID=my-project REGION=us-central1 SERVICE_NAME=decide-api \
-#   SQL_INSTANCE=decide-sql DB_NAME=autonomyx DB_USER=autonomyx DB_PASSWORD=... \
-#   SECRET_KEY=... ./deploy-gcp.sh
-
-set -euo pipefail
+# Optional env vars:
+# IMAGE_NAME (default: decide-api)
+# VPC_CONNECTOR
+# SERVICE_ACCOUNT
+# ALLOW_UNAUTHENTICATED (default: false)
+# MIN_INSTANCES (default: 0)
+# MAX_INSTANCES (default: 4)
+# MEMORY (default: 1Gi)
+# CPU (default: 1)
+# ENVIRONMENT (default: prod)
 
 required_vars=(
   PROJECT_ID
@@ -32,7 +36,12 @@ for var in "${required_vars[@]}"; do
 done
 
 IMAGE_NAME="${IMAGE_NAME:-decide-api}"
-ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-true}"
+ALLOW_UNAUTHENTICATED="${ALLOW_UNAUTHENTICATED:-false}"
+MIN_INSTANCES="${MIN_INSTANCES:-0}"
+MAX_INSTANCES="${MAX_INSTANCES:-4}"
+MEMORY="${MEMORY:-1Gi}"
+CPU="${CPU:-1}"
+ENVIRONMENT="${ENVIRONMENT:-prod}"
 
 if ! command -v gcloud >/dev/null 2>&1; then
   echo "gcloud CLI is required." >&2
@@ -46,11 +55,9 @@ fi
 
 gcloud config set project "${PROJECT_ID}" >/dev/null
 
-PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
 SQL_CONNECTION_NAME="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
 IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME}/${SERVICE_NAME}:$(date +%Y%m%d-%H%M%S)"
 
-# Discover Memorystore host via redis.instances.list to avoid requiring a separate env var.
 REDIS_HOST="$(gcloud redis instances list --region="${REGION}" --format='value(host)' --filter='state:READY' | head -n 1)"
 if [[ -z "${REDIS_HOST}" ]]; then
   echo "No READY Redis instance found in ${REGION}. Create one or set REDIS_URL manually after deploy." >&2
@@ -58,7 +65,12 @@ if [[ -z "${REDIS_HOST}" ]]; then
 fi
 
 REDIS_URL="redis://${REDIS_HOST}:6379"
-DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@/\${DB_NAME}?host=/cloudsql/${SQL_CONNECTION_NAME}"
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@/${DB_NAME}?host=/cloudsql/${SQL_CONNECTION_NAME}"
+
+if [[ ${#SECRET_KEY} -lt 32 ]]; then
+  echo "SECRET_KEY should be at least 32 characters for production deployments." >&2
+  exit 1
+fi
 
 echo "Enabling required APIs..."
 gcloud services enable \
@@ -81,28 +93,27 @@ fi
 echo "Building image ${IMAGE_URI}..."
 gcloud builds submit --tag "${IMAGE_URI}" .
 
-echo "Granting Cloud Run service agent access to Cloud SQL..."
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@serverless-robot-prod.iam.gserviceaccount.com" \
-  --role="roles/cloudsql.client" >/dev/null
-
 echo "Deploying ${SERVICE_NAME} to Cloud Run..."
 DEPLOY_ARGS=(
   run deploy "${SERVICE_NAME}"
   --image "${IMAGE_URI}"
   --region "${REGION}"
   --platform managed
-  --set-env-vars "DATABASE_URL=${DATABASE_URL},REDIS_URL=${REDIS_URL},SECRET_KEY=${SECRET_KEY},DEBUG=false"
+  --set-env-vars "DATABASE_URL=${DATABASE_URL},REDIS_URL=${REDIS_URL},SECRET_KEY=${SECRET_KEY},DEBUG=false,ENVIRONMENT=${ENVIRONMENT},SEED_ON_STARTUP=false"
   --add-cloudsql-instances "${SQL_CONNECTION_NAME}"
   --port 8000
-  --min-instances 0
-  --max-instances 4
-  --memory 1Gi
-  --cpu 1
+  --min-instances "${MIN_INSTANCES}"
+  --max-instances "${MAX_INSTANCES}"
+  --memory "${MEMORY}"
+  --cpu "${CPU}"
 )
 
 if [[ -n "${VPC_CONNECTOR:-}" ]]; then
   DEPLOY_ARGS+=(--vpc-connector "${VPC_CONNECTOR}" --egress-settings all)
+fi
+
+if [[ -n "${SERVICE_ACCOUNT:-}" ]]; then
+  DEPLOY_ARGS+=(--service-account "${SERVICE_ACCOUNT}")
 fi
 
 if [[ "${ALLOW_UNAUTHENTICATED}" == "true" ]]; then
