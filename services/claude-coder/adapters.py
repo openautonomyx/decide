@@ -50,10 +50,13 @@ class GenericCodingBackend(CodingBackend):
 
 
 def get_coding_backend(backend_id: str, backend: Dict[str, Any]) -> CodingBackend:
-    provider = backend.get("config", {}).get("provider", "")
-    transport = backend.get("config", {}).get("transport", "") or backend.get("transport", "")
+    config = backend.get("config", {})
+    provider = str(config.get("provider", "")).lower()
+    transport = str(config.get("transport", "") or backend.get("transport", "")).lower()
 
-    if provider == "anthropic":
+    if provider in {"anthropic", "anthropic_vertex", "vertex_ai", "vertex"}:
+        return ClaudeCodingBackend(backend_id, backend)
+    if transport in {"anthropic_vertex", "vertex_ai"}:
         return ClaudeCodingBackend(backend_id, backend)
     if provider == "litellm" or transport == "openai_compatible":
         return DevstralLiteLLMBackend(backend_id, backend)

@@ -21,8 +21,11 @@ def get_env_backend_config(env_prefix: str) -> Dict[str, Any]:
         "enabled": os.getenv(f"{env_prefix}_ENABLED", "false").lower() == "true",
         "provider": os.getenv(f"{env_prefix}_PROVIDER", ""),
         "model": os.getenv(f"{env_prefix}_MODEL", ""),
+        "transport": os.getenv(f"{env_prefix}_TRANSPORT", ""),
         "base_url": os.getenv(f"{env_prefix}_BASE_URL", ""),
         "api_key": os.getenv(f"{env_prefix}_API_KEY", ""),
+        "vertex_project": os.getenv(f"{env_prefix}_VERTEX_PROJECT", ""),
+        "vertex_region": os.getenv(f"{env_prefix}_VERTEX_REGION", ""),
     }
 
 
