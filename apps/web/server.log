@@ -1,0 +1,25 @@
+
+> decide-web@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 1407ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 3.5s (852 modules)
+ GET /dashboard 200 in 3701ms
+ ✓ Compiled in 345ms (433 modules)
+ GET /dashboard 200 in 24ms
+ ✓ Compiled /workflows in 343ms (845 modules)
+ GET /workflows 200 in 433ms
+ ○ Compiling /builder ...
+ ✓ Compiled /builder in 853ms (1182 modules)
+ GET /builder 200 in 940ms
+ ✓ Compiled /memory in 194ms (1178 modules)
+ GET /memory 200 in 236ms
+ ✓ Compiled /logs in 456ms (1190 modules)
+ GET /logs 200 in 501ms
+ ✓ Compiled /app in 202ms (1204 modules)
+ GET /app 200 in 244ms
